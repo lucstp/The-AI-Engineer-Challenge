@@ -1,0 +1,7 @@
+packages:
+  - frontend
+  - api
+onlyBuiltDependencies:
+  - '@biomejs/biome'
+  - '@tailwindcss/oxide'
+  - sharp
