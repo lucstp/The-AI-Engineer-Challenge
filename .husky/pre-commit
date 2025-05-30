@@ -1,4 +1,3 @@
 #!/bin/sh
-
-pnpm --filter frontend run format
-pnpm --filter frontend run lint
+echo "Running lint-staged..." >&2
+npx lint-staged
