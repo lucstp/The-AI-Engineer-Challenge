@@ -11,12 +11,14 @@ This is a FastAPI-based backend service that provides a streaming chat interface
 ## Setup
 
 1. Create a virtual environment (recommended):
+
 ```bash
 python -m venv venv
 source venv/bin/activate  # On Windows, use: venv\Scripts\activate
 ```
 
 2. Install the required dependencies:
+
 ```bash
 pip install fastapi uvicorn openai pydantic
 ```
@@ -24,11 +26,13 @@ pip install fastapi uvicorn openai pydantic
 ## Running the Server
 
 1. Make sure you're in the `api` directory:
+
 ```bash
 cd api
 ```
 
 2. Start the server:
+
 ```bash
 python app.py
 ```
@@ -38,9 +42,11 @@ The server will start on `http://localhost:8000`
 ## API Endpoints
 
 ### Chat Endpoint
+
 - **URL**: `/api/chat`
 - **Method**: POST
 - **Request Body**:
+
 ```json
 {
     "developer_message": "string",
@@ -49,9 +55,11 @@ The server will start on `http://localhost:8000`
     "api_key": "your-openai-api-key"
 }
 ```
+
 - **Response**: Streaming text response
 
 ### Health Check
+
 - **URL**: `/api/health`
 - **Method**: GET
 - **Response**: `{"status": "ok"}`
@@ -59,6 +67,7 @@ The server will start on `http://localhost:8000`
 ## API Documentation
 
 Once the server is running, you can access the interactive API documentation at:
+
 - Swagger UI: `http://localhost:8000/docs`
 - ReDoc: `http://localhost:8000/redoc`
 
@@ -69,8 +78,9 @@ The API is configured to accept requests from any origin (`*`). This can be modi
 ## Error Handling
 
 The API includes basic error handling for:
+
 - Invalid API keys
 - OpenAI API errors
 - General server errors
 
-All errors will return a 500 status code with an error message. 
+All errors will return a 500 status code with an error message.

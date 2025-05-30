@@ -1,8 +1,7 @@
-<p align = "center" draggable=”false” ><img src="https://github.com/AI-Maker-Space/LLM-Dev-101/assets/37101144/d1343317-fa2f-41e1-8af1-1dbb18399719" 
+<p align = "center" draggable=”false” ><img src="https://github.com/AI-Maker-Space/LLM-Dev-101/assets/37101144/d1343317-fa2f-41e1-8af1-1dbb18399719"
      width="200px"
      height="auto"/>
 </p>
-
 
 ## <h1 align="center" id="heading"> 👋 Welcome to the AI Engineer Challenge</h1>
 
@@ -24,7 +23,6 @@ Are you ready? Let's get started!
 That's it! Head to the next step and start building your application!
 
 </details>
-
 
 <details>
   <summary>🏗️ Forking & Cloning This Repository</summary>
@@ -56,7 +54,7 @@ That's it! Head to the next step and start building your application!
 While it is a bit counter-intuitive to set things up before jumping into vibe-coding - it's important to remember that there exists a gradient betweeen AI-Assisted Development and Vibe-Coding. We're only reaching *slightly* into AI-Assisted Development for this challenge, but it's worth it!
 
 1. Check out the rules in `.cursor/rules/` and add theme-ing information like colour schemes in `frontend-rule.mdc`! You can be as expressive as you'd like in these rules!
-2. We're going to index some docs to make our application more likely to succeed. To do this - we're going to start with `CTRL+SHIFT+P` (or `CMD+SHIFT+P` on Mac) and we're going to type "custom doc" into the search bar. 
+2. We're going to index some docs to make our application more likely to succeed. To do this - we're going to start with `CTRL+SHIFT+P` (or `CMD+SHIFT+P` on Mac) and we're going to type "custom doc" into the search bar.
 
      ![image](https://i.imgur.com/ILx3hZu.png)
 3. We're then going to copy and paste `https://nextjs.org/docs` into the prompt.
@@ -69,14 +67,14 @@ While it is a bit counter-intuitive to set things up before jumping into vibe-co
 
 5. After that - you will do the same with Vercel's documentation. After which you should see:
 
-     ![image](https://i.imgur.com/hjyXhhC.png) 
+     ![image](https://i.imgur.com/hjyXhhC.png)
 
 </details>
 
 <details>
   <summary>😎 Vibe Coding a Front End for the FastAPI Backend</summary>
 
-1. Use `Command-L` or `CTRL-L` to open the Cursor chat console. 
+1. Use `Command-L` or `CTRL-L` to open the Cursor chat console.
 
 2. Set the chat settings to the following:
 
@@ -84,7 +82,7 @@ While it is a bit counter-intuitive to set things up before jumping into vibe-co
 
 3. Ask Cursor to create a frontend for your application. Iterate as much as you like!
 
-4. Run the frontend using the instructions Cursor provided. 
+4. Run the frontend using the instructions Cursor provided.
 
 > NOTE: If you run into any errors, copy and paste them back into the Cursor chat window - and ask Cursor to fix them!
 
@@ -121,7 +119,7 @@ While it is a bit counter-intuitive to set things up before jumping into vibe-co
 
 </details>
 
-### 🎉 Congratulations! 
+### 🎉 Congratulations
 
 You just deployed your first LLM-powered application! 🚀🚀🚀 Get on linkedin and post your results and experience! Make sure to tag us at @AIMakerspace!
 

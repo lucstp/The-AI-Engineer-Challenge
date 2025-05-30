@@ -1,0 +1,4 @@
+#!/bin/sh
+
+pnpm --filter frontend run format
+pnpm --filter frontend run lint
