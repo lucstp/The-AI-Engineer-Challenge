@@ -3,9 +3,13 @@
 		"@commitlint/cli": "^19.8.1",
 		"@commitlint/config-conventional": "^19.8.1",
 		"husky": "^9.1.7",
+		"lint-staged": "^16.1.0",
 		"markdownlint-cli": "^0.45.0"
 	},
 	"scripts": {
 		"prepare": "husky"
+	},
+	"lint-staged": {
+		"frontend/src/**/*.{js,ts,tsx}": ["biome format --write", "biome lint"]
 	}
 }
