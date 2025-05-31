@@ -1,0 +1,81 @@
+# coderabbit.yaml
+code_generation:
+  language: "en"
+  path_instructions:
+    "frontend/src/app/**/*.{ts,tsx,js,jsx}": |
+      Use single-line comments for internal logic. Max 2 lines.
+      Document page/route functionality. Include key features.
+      
+    "frontend/src/components/**/*.{ts,tsx,js,jsx}": |
+      Use JSDoc to document props. Include @example if complex.
+      Include component role within application.
+      Document accessibility considerations.
+      
+    "frontend/src/lib/**/*.{ts,js}": |
+      Use full JSDoc with @param, @returns, and @throws.
+      Include usage example for utility functions.
+      Document expected inputs and outputs with TypeScript types.
+      
+    "frontend/src/hooks/**/*.{ts,js}": |
+      Document hook parameters and return values.
+      Explain side effects, cleanup, and dependencies.
+      Include examples of proper hook usage.
+
+  # Test generation strategy with co-located tests
+  unit_test_generation:
+    "frontend/src/components/**/*.{test,spec}.{ts,tsx,js,jsx}": |
+      Use React Testing Library conventions.
+      Test rendering, interactions, and accessibility.
+      Mock external dependencies and context providers.
+      Test with various prop combinations.
+      
+    "frontend/src/hooks/**/*.{test,spec}.{ts,js}": |
+      Test hook behavior under different scenarios.
+      Verify state transitions and effects.
+      Test with various input parameters.
+
+# Review profile
+review:
+  profile: "assertive"
+  request_changes_workflow: false
+  high_level_summary: true
+  high_level_summary_placeholder: "@coderabbitai summary"
+  auto_title_placeholder: "@coderabbitai"
+  auto_title_instructions: "Use conventional commit format: type(frontend): short description."
+  commit_status: true
+  changed_files_summary: true
+  sequence_diagrams: true
+
+# Frontend-specific tools
+tools:
+  github:
+    checks: true
+    timeout_ms: 120000
+  
+  # Quality tools
+  languagetool: true
+  ast_grep: true
+  
+  # Frontend linters - Only enable linters you've actually installed
+  linters:
+    biome: true         # Enable since we're using Biome
+    eslint: true       # Disable since we're using Biome instead
+    typescript: true    # Enable for TypeScript projects
+    tailwindlint: true # You don't have a dedicated Tailwind linter installed
+    markdownlint: true  # You have markdownlint-cli installed
+    semgrep: true       # Now installed and configured
+    gitleaks: true      # After you install it
+    
+  # Additional CodeRabbit features
+  changed_files_summary: true
+  sequence_diagrams: true
+  assess_linked_issues: true
+  related_issues: true
+  related_prs: true
+  suggested_labels: true
+  auto_apply_labels: false
+  suggested_reviewers: true
+  auto_assign_reviewers: false
+  poem: false
+  abort_on_close: true
+  disable_cache: false

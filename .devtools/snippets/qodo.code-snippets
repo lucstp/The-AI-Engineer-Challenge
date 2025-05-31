@@ -1,0 +1,18 @@
+{
+  "QODO AI Commit Message Generator": {
+    "prefix": "qcommit",
+    "body": [
+      "Generate a conventional commit message for the following changes:",
+      "",
+      "```",
+      "${1:Paste git diff or describe changes here}",
+      "```",
+      "",
+      "Follow the format: type(scope): subject",
+      "Where type is one of: feat, fix, docs, style, refactor, perf, test, chore, ci, build, revert",
+      "The scope should be the affected component or module",
+      "The subject should be a concise description in present tense"
+    ],
+    "description": "Generate a conventional commit message with QODO AI"
+  }
+}
