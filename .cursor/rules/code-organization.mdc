@@ -1,0 +1,18 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+### Code Organization Guidelines
+
+- Structure files **logically by feature or domain**, grouping related components, hooks, types, helpers, and static assets together (e.g., `/features/chat/`, `/hooks/useChat.ts`, `/types/message.ts`).
+- Use **named exports** for all components, hooks, and utilities to improve IDE auto-imports, traceability, and refactoring.
+- Favor **small, focused components** over large, monolithic ones — keep responsibilities isolated and composable.
+- Separate **presentational components** (UI-focused, pure) from **container components** (state, effects, data).
+- All styling must be done using **pure Tailwind CSS utility classes only**.  
+  Do not use: CSS Modules, inline styles for layout or appearance, `styled-components`, or external stylesheets.  
+  See `animation-guidelines.mdc` for controlled use of `style={{}}` in animated components.
+- For responsiveness, use **Tailwind's responsive utility variants** (`sm:`, `md:`, `lg:`, etc.) wherever possible. Use `useIsMobile()` or similar only when conditional rendering logic depends on screen size.
+- Co-locate Tailwind-styled components and hooks in folders scoped by their role or feature (e.g., `features/chat/MessageBubble.tsx` with its logic nearby).
+- Extract shared values like breakpoints, limits, and keys to a centralized `/constants/` directory to avoid duplication.
+- If a folder introduces new patterns or internal logic, include a `README.md` or `index.mdx` to explain decisions.

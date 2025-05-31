@@ -1,0 +1,149 @@
+---
+description: Enfore friendly and logical error handling.
+globs: **/*.{js,jsx,ts,tsx}
+alwaysApply: false
+---
+# Error Handling Guidelines
+
+Proper error handling ensures both developer traceability and user confidence. Follow these rules across frontend and UI logic:
+
+---
+
+## General Principles
+
+- Implement robust `try/catch` handling around all async operations, especially API calls and animation effects.
+- Use `console.error()` for developer debugging, but never expose raw error traces to users.
+- Provide end-users with **clear, human-friendly error feedback** using `useToast()` or inline UI messages.
+- Use **Zod schemas** to validate critical inputs and API responses, and surface validation errors gracefully.
+
+---
+
+## Toast-Based UX Notifications
+
+- Always notify users when an API request fails, an action is blocked, or input is invalid.
+
+```tsx
+toast({
+  title: "API Key Required",
+  description: "Please enter your OpenAI API key to continue.",
+  variant: "destructive",
+})
+```
+
+---
+
+## Chat-Specific Error Handling
+
+For our chat application, implement these specific error handling patterns:
+
+### API Request Failures
+
+```tsx
+try {
+  const response = await sendChatMessage(message);
+  // Handle successful response
+} catch (error) {
+  // Log for developers
+  console.error("Chat message send failed:", error);
+  
+  // Determine user-friendly message
+  const userMessage = error instanceof ApiError 
+    ? error.message 
+    : "Failed to send message. Please try again.";
+  
+  // Display to user
+  toast({
+    title: "Message Error",
+    description: userMessage,
+    variant: "destructive",
+  });
+  
+  // Update UI state
+  setChatState(prev => ({
+    ...prev,
+    error: userMessage,
+    isLoading: false
+  }));
+}
+```
+
+### Input Validation
+
+```tsx
+import { z } from "zod";
+
+const messageSchema = z.object({
+  content: z.string().min(1, "Message cannot be empty"),
+});
+
+function validateMessage(message) {
+  const result = messageSchema.safeParse(message);
+  if (!result.success) {
+    const errorMessage = result.error.issues[0]?.message || "Invalid message";
+    toast({
+      title: "Validation Error",
+      description: errorMessage,
+      variant: "destructive",
+    });
+    return false;
+  }
+  return true;
+}
+```
+
+---
+
+## Error Boundaries
+
+Implement React Error Boundaries to prevent the entire app from crashing:
+
+```tsx
+import { ErrorBoundary } from "react-error-boundary";
+
+function ErrorFallback({ error, resetErrorBoundary }) {
+  return (
+    <div className="p-4 border border-red-500 rounded-md bg-red-50">
+      <h2 className="text-lg font-semibold text-red-800">Something went wrong</h2>
+      <p className="text-sm text-red-600">
+        We encountered an error. Please try again or refresh the page.
+      </p>
+      <button
+        onClick={resetErrorBoundary}
+        className="mt-2 px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600"
+      >
+        Try again
+      </button>
+    </div>
+  );
+}
+
+// Usage
+<ErrorBoundary FallbackComponent={ErrorFallback}>
+  <ChatWindow />
+</ErrorBoundary>
+```
+
+---
+
+## Error Tracking
+
+Consider adding error tracking with Sentry or a similar service for production environments:
+
+```tsx
+import * as Sentry from "@sentry/nextjs";
+
+try {
+  // Risky operation
+} catch (error) {
+  console.error("Operation failed:", error);
+  Sentry.captureException(error);
+  // Show user-friendly message
+}
+```
+
+---
+By following these guidelines, we ensure that errors are:
+1. **Captured** for developer debugging
+2. **Communicated** clearly to users
+3. **Contained** to prevent application crashes
+4. **Recoverable** with clear user actions

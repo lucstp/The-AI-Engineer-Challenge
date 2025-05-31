@@ -1,4 +1,3 @@
-# coderabbit.yaml
 code_generation:
   language: "en"
   path_instructions:
@@ -55,13 +54,14 @@ tools:
   # Quality tools
   languagetool: true
   ast_grep: true
+  lighthouse: true  # Add this line for Lighthouse integration
   
   # Frontend linters - Only enable linters you've actually installed
   linters:
     biome: true         # Enable since we're using Biome
-    eslint: true       # Disable since we're using Biome instead
+    eslint: true        # Disable since we're using Biome instead
     typescript: true    # Enable for TypeScript projects
-    tailwindlint: true # You don't have a dedicated Tailwind linter installed
+    tailwindlint: true  # You don't have a dedicated Tailwind linter installed
     markdownlint: true  # You have markdownlint-cli installed
     semgrep: true       # Now installed and configured
     gitleaks: true      # After you install it

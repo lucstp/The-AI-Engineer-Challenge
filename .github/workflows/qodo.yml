@@ -1,4 +1,3 @@
-# .github/workflows/qodo.yaml
 name: QODO AI Test Generation
 
 on:

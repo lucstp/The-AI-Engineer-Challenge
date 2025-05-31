@@ -1,4 +1,3 @@
-# .github/workflows/vercel.yaml
 name: Vercel Deployment
 
 on:

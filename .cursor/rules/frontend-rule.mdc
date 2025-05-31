@@ -1,13 +1,14 @@
 ---
-description: When designing a frontend or frontend components.
+description: 
 globs: 
-alwaysApply: false
+alwaysApply: true
 ---
 ### Rules for Frontend
 
-- You must pay attention to visual clarity and contrast. Do not place white text on a white background.
-- You must ensure the UX is pleasant. Boxes should grow to fit their contents, etc. 
-- When asking the user for sensitive information - you must use password style text-entry boxes in the UI.
-- You should use Next.js as it works best with Vercel. 
-- This frontend will ultimately be deployed on Vercel, but it should be possible to test locally. 
-- Always provide users with a way to run the created UI once you have created it.
+- Always ensure strong **visual clarity and contrast** — never place light text on a light background or compromise readability.
+- Design with a **pleasant, intuitive UX**: boxes and containers should adapt fluidly to their content; avoid fixed dimensions where flexibility is expected.
+- When collecting **sensitive information**, use appropriate masked input types (e.g., `type="password"`), and never log or expose this data.
+- Use **Next.js (App Router)** as the framework of choice — it is optimized for deployment on **Vercel**, our target platform.
+- Ensure the frontend is **fully testable locally** (`localhost`) even before Vercel deployment — support local `.env`, mock APIs, and SSR/ISR behavior.
+- After building a UI or flow, always include **clear instructions or commands for how to run and test it**, either via local dev (`npm run dev`) or preview links.
+- If using `zustand` with `persist`, ensure that **sensitive keys like API tokens are not exposed in the DOM or console**, and clearly document what is stored in `localStorage` and why.

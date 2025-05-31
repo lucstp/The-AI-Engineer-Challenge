@@ -1,0 +1,27 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# Rule: Follow Consistent Naming Conventions
+
+All identifiers, filenames, and constants must follow consistent naming patterns aligned with industry and project-specific standards.
+
+- Use **PascalCase** for:
+  - TypeScript types and interfaces
+  - React component names
+  - Class names
+- Use **camelCase** for:
+  - Variables
+  - Functions and methods
+  - Object keys (unless interfacing with external data)
+- Use **kebab-case** for:
+  - File and directory names
+  - Slugs and static route segments
+- Use **UPPERCASE** for:
+  - Environment variables (e.g. `NODE_ENV`, `OPENAI_API_KEY`)
+  - Shared constant values that should not change at runtime
+
+### Additional Guidelines:
+- Avoid magic numbers and strings. Define constants with descriptive names (`MAX_RETRIES`, `DEFAULT_TIMEOUT_MS`).
+- Function and method names must begin with a verb (`getUser`, `submitForm`, `handleClick`) to clearly indicate their action.
