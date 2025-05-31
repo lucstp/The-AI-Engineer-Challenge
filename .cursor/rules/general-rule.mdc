@@ -5,7 +5,7 @@ alwaysApply: true
 ---
 ## Rules to Follow
 
-- You must always commit your changes whenever you update code. 
-- You must always try and write code that is well documented. (self or commented is fine)
-- You must only work on a single feature at a time.
-- You must explain your decisions thouroughly to the user.
+- Always commit your changes incrementally after completing each logical unit of work.
+- Write self-explanatory code; when clarity is not obvious, use concise comments or JSDoc annotations.
+- Only work on one feature or task at a time — every branch must isolate a single concern to ensure clarity, testability, and clean merges.
+- Clearly explain your implementation decisions in PRs or handoffs — include the “why”, not just the “what”.

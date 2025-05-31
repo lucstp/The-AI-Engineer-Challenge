@@ -1,0 +1,35 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# Rule: Code Generation Must Follow Core Engineering Principles
+
+Generated code must align with the project's architecture, libraries, and established conventions. Assume expert-level proficiency in TypeScript, Node.js, Next.js App Router, React (RSC), Tailwind, Shadcn UI, Radix UI, Zod, Framer Motion, and Biome.
+
+- Write concise and precise TypeScript. Always include relevant and accurate usage examples.
+- Use functional and declarative patterns. Avoid `class`-based components or imperative logic unless strictly required.
+- Emphasize modularity and iteration. Never duplicate logic across files or components.
+- Use expressive and descriptive variable naming, including auxiliary verbs (`isLoading`, `hasError`, `canSubmit`, etc.).
+- Follow a consistent file structure:
+  - Top-level component
+  - Subcomponents (co-located or extracted if reused)
+  - Helpers and utility functions
+  - Static constants and configuration
+  - Type definitions (`types.ts` or inline)
+- Adhere to Next.js best practices for:
+  - **Rendering**: Prefer Server Components for data fetching and rendering.
+  - **Data Fetching**: Use `fetch()` with caching directives in Server Components.
+  - **Routing**: Utilize the App Router with file-based routing and layouts.
+
+## React 19 and Next.js 15 Enhancements
+
+- **Optimistic UI Updates**: Utilize `useOptimistic()` for immediate UI feedback during asynchronous operations, such as message sending or toggling features. This enhances user experience by providing instant visual responses. For more information, refer to the [React documentation on useOptimistic](https://react.dev/reference/react/useOptimistic).
+
+- **Form Submission Handling**: Implement `useFormStatus()` within forms to manage submission states effectively, replacing manual loading indicators and preventing multiple submissions. Detailed usage can be found in the [React documentation on useFormStatus](https://react.dev/reference/react-dom/hooks/useFormStatus).
+
+- **Server Actions for Mutations**: Prefer Server Actions for handling data mutations, leveraging the `use server` directive to define server-side functions that can be invoked directly from components. This approach simplifies data handling and improves performance. See the [Next.js documentation on Server Actions and Mutations](https://nextjs.org/docs/app/building-your-application/data-fetching/server-actions-and-mutations) for guidance.
+
+- **Client Component Declaration**: Only designate components as Client Components (`"use client"`) when they require interactivity, such as event handlers or state management. This approach optimizes performance by reducing unnecessary client-side JavaScript. More details are available in the [Next.js documentation on Server and Client Components](https://nextjs.org/docs/app/building-your-application/rendering/server-and-client-components).
+
+- **Colocation of Server Actions**: Organize Server Actions alongside their respective features under `/features/x/actions.ts` or within the `app/actions.ts` directory to maintain modularity and clarity. This practice enhances code maintainability and readability. For best practices, consult the [Next.js documentation on Server Actions](https://nextjs.org/docs/app/building-your-application/data-fetching/server-actions-and-mutations).

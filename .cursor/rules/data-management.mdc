@@ -1,0 +1,29 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# Rule: All Data Interaction Must Go Through the FastAPI Layer
+
+Data access in the application must go through the FastAPI backend (`api/app.py`). Direct access to external APIs (like OpenAI) or any database-like service from frontend or Next.js code is prohibited.
+
+- Frontend components and Next.js server actions must interact with the backend via HTTP requests to `/api/chat` or other defined endpoints (e.g. `/api/health`).
+- The backend is responsible for handling authentication, input validation, error handling, and streaming logic.
+- Use Next.js's extended `fetch()` API to call the backend, enabling proper caching and revalidation semantics.
+
+### Example (server action or React component):
+```ts
+await fetch("http://localhost:8000/api/chat", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify({
+    developer_message: "You are an assistant.",
+    user_message: "How do I call the backend?",
+    api_key: process.env.OPENAI_API_KEY,
+  }),
+  next: {
+    revalidate: 60, // Enables caching and revalidation for static optimization
+  },
+});

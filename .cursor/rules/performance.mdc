@@ -1,0 +1,27 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# Rule: Optimize for Performance and Web Vitals
+
+Code must be optimized for runtime performance and Web Vitals scoring, following Next.js best practices.
+
+- Avoid unnecessary use of `'use client'`, `useEffect`, and `setState`. Prefer React Server Components (RSC) whenever possible.
+- Wrap all client components in `Suspense` with a fallback UI to improve hydration behavior.
+- Use `dynamic()` from `next/dynamic` for non-critical or heavy client components to enable lazy loading.
+- Always optimize images:
+  - Use the `next/image` component.
+  - Prefer modern formats like WebP.
+  - Include explicit `width` and `height` props.
+  - Enable lazy loading by default.
+- Use server actions (`app/` directory) for data mutations. Avoid defining custom API routes (`/api/`) when not needed.
+## Performance Testing
+
+All PRs are automatically tested with Lighthouse CI to ensure they meet performance standards. The minimum acceptable scores are:
+- Performance: 90+
+- Accessibility: 95+
+- Best Practices: 95+
+- SEO: 95+
+
+Changes that significantly reduce these scores (>5 points) require justification and approval from a senior engineer.

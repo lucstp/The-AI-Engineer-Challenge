@@ -1,0 +1,59 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# Animation Guidelines
+
+We support runtime animation using `motion/react` (Motion One or Framer Motion), while maintaining a strict separation between **animated behavior** and **static styling**.
+
+---
+
+## Allowed Practices
+
+- Use `motion` components (`motion.div`, `motion.span`, etc.) to animate layout, visibility, or transitions.
+- Use `style={{}}` **only for animated properties** that cannot be expressed in Tailwind, such as:
+  - `opacity`
+  - `width`, `height`, `scale`, `transform`
+  - `translateX`, `translateY`, `rotate`
+- Tailwind utility classes must be used for all **non-animated layout, typography, spacing, color, and structure**.
+
+### Example of Correct Usage
+
+```tsx
+<motion.div
+  initial={{ opacity: 0 }}
+  animate={{ opacity: 1 }}
+  transition={{ duration: 0.5 }}
+  className="text-lg font-semibold text-center text-blue-500"
+/>
+```
+
+---
+
+## Disallowed Practices
+
+- Do not use `style={{}}` for static properties like padding, margin, color, fontSize, etc.
+- Do not use CSS animations, `@keyframes`, styled-components, or external animation libraries.
+- Avoid mixing inline style and Tailwind utilities for the same property (e.g., don't animate width while also using `w-32`).
+
+---
+
+## Implementation in Chat App
+
+For our chat application, animation should be used strategically to enhance user experience:
+
+- **Message Transitions**: Animate new messages appearing in the chat
+- **Loading States**: Use subtle animations for loading indicators
+- **Error States**: Animate error notifications to draw attention
+- **Typewriter Effect**: Implement typewriter animation for AI responses
+- **Modal Transitions**: Smooth transitions for modals and dialogs
+
+---
+
+## Reference Resources
+
+If you're unsure how to animate something, or want to align with best practices, consult:
+-  [TailwindCSS Docs](mdc:https:/tailwindcss.com/docs)
+-  [Motion One Docs](mdc:https:/motion.dev/docs) or [Framer Motion Docs](mdc:https:/www.framer.com/motion)
+-  [shadcn/ui Docs](mdc:https:/ui.shadcn.com/docs)
