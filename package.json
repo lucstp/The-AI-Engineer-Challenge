@@ -6,6 +6,7 @@
 	"devDependencies": {
 		"@commitlint/cli": "^19.8.1",
 		"@commitlint/config-conventional": "^19.8.1",
+		"@lhci/cli": "^0.12.0",
 		"husky": "^9.1.7",
 		"lint-staged": "^16.1.0",
 		"markdownlint-cli": "^0.45.0"
@@ -15,7 +16,8 @@
 		"prepare": "husky",
 		"build": "pnpm -r build",
 		"dev": "pnpm -r dev",
-		"qcommit": "./bin/qcommit"
+		"qcommit": "./bin/qcommit",
+		"lighthouse": "lhci autorun"
 	},
 	"lint-staged": {
 		"frontend/src/**/*.{js,ts,tsx}": ["biome format --write", "biome lint"],
