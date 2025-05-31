@@ -1,0 +1,25 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+## Rule: AI Code Collaboration Guidelines
+
+### CodeRabbit
+- Follow Conventional Commits (`type(scope): description`).
+- Use one-liner comments above internal functions.
+- Use full docstrings (`@param`, `@returns`) for public exports or SDKs.
+- Structure PRs to trigger CodeRabbit cleanly (meaningful titles + summaries).
+
+### QODO AI
+- Keep function input/output contracts clean for better test generation.
+- Avoid side effects or hidden dependencies when possible.
+- Co-locate generated tests with their corresponding components, placing them in the same directory as the component file (e.g., `Button.tsx` and `Button.test.tsx` in the same folder). This enhances maintainability and aligns with modern React testing practices.
+
+### React 19 and Next.js 15 `useOptimistic()` and `useFormStatus()` in AI-generated code to enhance user experience and simplify form handling. For more information, refer to the [React documentation on useOptimistic](mdc:https:/ratus](https:/react.dev/reference/react-dom/hooks/useFormStatus).
+
+- Utilize Server Actions for data mutations, ensuring that AI-generated code aligns with Next.js 15 best practices by defining server-side fut.js documentation on Server Actions and Mutations](https://nextjs.org/docs/app/building-your-application/data-fetching/server-actions-and-mutations) for guidance.
+
+- Clearly distinguish between Server and Client Components in AI-generated code, applying the `"use client"` directive only when necessary for interactivity. More details are available in the [Next.js documentation on Server and Client Components](mdc:https:/nextjs.org/docs/app/building-your-application/rendering/server-and-client-components).
+
+> All AI-generated content should be reviewed before merging.
