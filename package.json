@@ -16,7 +16,7 @@
 		"prepare": "husky",
 		"build": "pnpm -r build",
 		"dev": "pnpm -r dev",
-		"qcommit": "./bin/qcommit",
+		"qcommit": "./.bin/qcommit",
 		"lighthouse": "lhci autorun"
 	},
 	"lint-staged": {
