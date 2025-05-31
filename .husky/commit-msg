@@ -1,4 +1,4 @@
-# Add this line to see if the hook is running
+#!/bin/sh
 echo "Running commitlint..." >&2
 
 npx --no -- commitlint --edit "$1"
