@@ -5,9 +5,53 @@ alwaysApply: false
 ---
 ### Rules for Frontend
 
+### Product Direction
+
+- Build a premium glassmorphism LLM (Large Language Model) chat interface for a supportive mental-coach experience.
+- The frontend must feel calm, focused, polished, and trustworthy.
+- Prefer restrained elegance over decorative complexity.
+- Do not copy or name specific consumer product brands as visual targets.
+
+### Visual Direction
+
+- Support both dark mode and light mode, with dark mode treated as a first-class experience.
+- Use soft translucent panels, subtle borders, blurred backgrounds, layered depth, and restrained motion.
+- Avoid noisy gradients, low-contrast text, excessive animation, or decorative UI that harms readability.
+- Use generous spacing, clear hierarchy, readable typography, and predictable interaction states.
+
+### Design System
+
+- Use Tailwind CSS v4 utility classes for styling.
+- Use shadcn/ui primitives where practical for accessible components.
+- Use native CSS `backdrop-filter` through Tailwind utilities such as `backdrop-blur-*`.
+- Use Motion only for purposeful transitions: message entry, panel entrance, hover lift, loading states.
+- Prefer reusable internal primitives such as `GlassPanel`, `GlassCard`, and `ChatBubble` instead of repeating long class strings.
+
+### Theme Tokens
+
+- Use semantic colors rather than hardcoded one-off colors.
+- Recommended dark theme base:
+  - background: near-black / deep slate
+  - foreground: near-white
+  - muted foreground: soft slate
+  - primary accent: cyan, sky, or blue
+  - border: white with low opacity
+  - panel: white or black with low opacity and backdrop blur
+- Ensure all text meets readable contrast standards.
+
+### Chat UX
+
+- The app should clearly show user messages and assistant messages.
+- The input should remain visible and easy to use.
+- The interface should handle loading, errors, empty state, and long messages gracefully.
+- Never ask users to paste raw API keys into the frontend.
+- The frontend should call the backend endpoint instead of calling OpenAI directly from the browser.
+
+### Implementation Rules
+
 - You must pay attention to visual clarity and contrast. Do not place white text on a white background.
-- You must ensure the UX is pleasant. Boxes should grow to fit their contents, etc. 
-- When asking the user for sensitive information - you must use password style text-entry boxes in the UI.
-- You should use Next.js as it works best with Vercel. 
-- This frontend will ultimately be deployed on Vercel, but it should be possible to test locally. 
+- You must ensure the UX is pleasant. Boxes should grow to fit their contents, etc.
+- When asking the user for sensitive information, you must use password-style text-entry boxes in the UI.
+- You should use Next.js as it works best with Vercel.
+- This frontend will ultimately be deployed on Vercel, but it should be possible to test locally.
 - Always provide users with a way to run the created UI once you have created it.
