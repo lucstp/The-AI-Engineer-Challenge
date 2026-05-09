@@ -1,5 +1,5 @@
 ---
-description: 
+description: Project-wide engineering rules for The AI Engineer Challenge
 globs: 
 alwaysApply: true
 ---
@@ -9,3 +9,77 @@ alwaysApply: true
 - You must always try and write code that is well documented. (self or commented is fine)
 - You must only work on a single feature at a time.
 - You must explain your decisions thouroughly to the user.
+
+## Repository scope
+
+- Work only inside the current course repository.
+- Do not inspect, modify, or reason from unrelated repositories or parent workspaces.
+- Treat upstream course material as read-only reference unless explicitly instructed otherwise.
+- Do not replace the configured `origin` remote.
+- Do not add extra Git remotes unless explicitly instructed.
+- Keep this project isolated from unrelated company, governance, infrastructure, or policy work.
+
+## Git workflow
+
+- Do not make direct working changes on protected branches.
+- Use a small branch for each focused change.
+- Keep each Pull Request small and reviewable.
+- Use signed commits when committing changes.
+- Commit only after reviewing the relevant diff.
+- Follow this workflow:
+  1. Create a branch.
+  2. Make the smallest necessary change.
+  3. Review the diff.
+  4. Create a signed commit.
+  5. Push the branch.
+  6. Open a Pull Request.
+  7. Merge online.
+  8. Pull the protected branch.
+  9. Delete merged branches.
+
+## Local configuration
+
+- Do not edit global Git configuration.
+- Do not edit global Secure Shell configuration.
+- Do not suggest global Git conditional include configuration.
+- Do not change repository identity settings unless the task is explicitly about identity troubleshooting.
+- Do not use identities, keys, or signing configuration from unrelated projects.
+
+## Secrets and environment
+
+- Never paste, print, store, log, or commit raw secrets.
+- Never commit `.env` files containing real secrets.
+- Do not ask for raw Application Programming Interface keys.
+- Secrets must be injected at runtime through the approved local secret-management workflow.
+- Do not add fallback code that encourages hardcoded secrets.
+- Local secret-reference files may contain only secret references, never raw secret values.
+
+## Course execution model
+
+- Prefer read-only inspection before changing files.
+- Do not install packages unless explicitly instructed.
+- Do not deploy unless explicitly instructed.
+- Do not modify application code while working on repository rule setup.
+- Use the project-approved Python dependency and execution workflow.
+- Start local services only when needed.
+- Verify the local course environment when setup or environment state matters.
+
+## Engineering standards
+
+- Prefer simple, reversible, auditable changes.
+- Keep changes aligned with the course objective.
+- Do not introduce unnecessary architecture, frameworks, policies, hooks, or automation.
+- Do not add dependencies without a clear course-driven reason.
+- Preserve existing project structure unless the task explicitly asks to change it.
+- Avoid speculative refactors.
+- Favor readable code over clever code.
+- Keep frontend, backend, configuration, and documentation changes separated unless the task explicitly requires combining them.
+
+## Cursor behavior
+
+- Before generating or editing code, inspect the relevant existing files.
+- Follow the project rules in `.cursor/rules`.
+- Use existing conventions before introducing new ones.
+- When uncertain, make the smallest safe change that advances the course task.
+- Do not generate production deployment configuration unless explicitly requested.
+- Do not generate code that requires new packages unless the package addition has been explicitly approved.
