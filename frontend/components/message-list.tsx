@@ -48,7 +48,7 @@ export function MessageList({
       {isLocked && !hasMessages ? (
         <div
           role="note"
-          className="m-auto flex w-full max-w-[480px] flex-col items-center justify-center gap-2 rounded-lg border border-amber-300/40 bg-slate-950/55 p-5 text-center backdrop-blur-md"
+          className="m-auto flex w-full max-w-[480px] flex-col items-center justify-center gap-2 rounded-lg border border-white/25 bg-slate-950/55 p-5 text-center backdrop-blur-md"
         >
           <p className="m-0 text-base font-bold text-white sm:text-lg">
             Verify your OpenAI key to begin
@@ -59,10 +59,10 @@ export function MessageList({
         </div>
       ) : !hasMessages ? (
         <div className="m-auto w-full max-w-[620px] p-4 text-center">
-          <h2 className="m-0 mb-2 bg-gradient-to-br from-amber-300 via-rose-300 to-sky-300 bg-clip-text text-xl font-extrabold tracking-tight text-transparent sm:text-2xl">
+          <h2 className="m-0 mb-2 text-xl font-extrabold tracking-tight text-white sm:text-2xl">
             Your Coldplay knowledge space is ready
           </h2>
-          <p className="mx-auto mb-4 max-w-[52ch] text-sm text-slate-200 sm:text-base">
+          <p className="mx-auto mb-4 max-w-[52ch] text-sm text-slate-100 sm:text-base">
             Ask about songs, albums, eras, tours, members, and official releases. This assistant is
             scoped for Coldplay-only chat.
           </p>
@@ -95,7 +95,7 @@ export function MessageList({
                 className={cn(
                   "max-w-[88%] whitespace-pre-wrap leading-relaxed",
                   message.role === "user"
-                    ? "rounded-2xl border border-amber-200/50 bg-gradient-to-br from-amber-400/85 to-rose-400/65 px-4 py-2.5 text-stone-900 shadow-md font-medium"
+                    ? "rounded-2xl border border-white/60 bg-white/90 px-4 py-2.5 text-slate-900 shadow-md font-medium"
                     : "max-w-[95%] text-slate-100"
                 )}
               >

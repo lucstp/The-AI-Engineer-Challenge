@@ -257,7 +257,7 @@ export function ChatShell() {
                     role={isApiKeyVerified ? "status" : "alert"}
                     className={cn(
                       "mt-2 text-sm font-semibold",
-                      isApiKeyVerified ? "text-amber-200" : "text-rose-200"
+                      isApiKeyVerified ? "text-emerald-200" : "text-rose-200"
                     )}
                   >
                     {keyFeedback}

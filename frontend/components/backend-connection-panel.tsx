@@ -13,7 +13,7 @@ export function BackendConnectionPanel({
     <Card aria-label="Backend connection status">
       <CardHeader>
         <CardTitle>Backend connection</CardTitle>
-        <p className="text-sm font-bold text-amber-200">{verificationMessage}</p>
+        <p className="text-sm font-semibold text-emerald-200">{verificationMessage}</p>
       </CardHeader>
       <CardContent className="space-y-1.5">
         <CardDescription>

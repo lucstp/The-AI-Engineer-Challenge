@@ -5,14 +5,18 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-semibold ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent disabled:pointer-events-none disabled:opacity-50",
   {
     variants: {
       variant: {
+        // Clean white-on-glass primary action. Reads as a printed card on
+        // top of the glass surface; harmonizes with the cool background
+        // instead of fighting it.
         default:
-          "bg-gradient-to-r from-amber-400 to-rose-400 text-stone-900 border border-amber-200/60 shadow-md hover:brightness-105 hover:-translate-y-px",
+          "bg-white text-slate-900 border border-white/60 shadow-md hover:bg-white/95 hover:-translate-y-px",
+        // Refined rose for stop / destructive actions; not neon hot-pink.
         destructive:
-          "bg-gradient-to-r from-rose-500 to-pink-500 text-white border border-rose-200/40 hover:brightness-105",
+          "bg-rose-500/95 text-white border border-rose-200/40 shadow-md hover:bg-rose-500",
         outline:
           "border border-white/40 bg-white/10 text-white backdrop-blur-sm hover:bg-white/20",
         ghost: "text-white hover:bg-white/10",

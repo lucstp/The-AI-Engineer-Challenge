@@ -33,12 +33,21 @@ body {
     auto;
 }
 
+/* Clickable surfaces show the standard OS pointer, not the heart, so the
+   user can tell at a glance what is interactive vs. decorative. */
 a,
 button,
-[role="button"] {
-  cursor:
-    url("https://eustore.coldplay.com/cdn/shop/files/heart_favicon.png?v=1770660766") 16 16,
-    pointer;
+[role="button"],
+[type="submit"],
+[type="button"],
+label[for] {
+  cursor: pointer;
+}
+
+button:disabled,
+[role="button"][aria-disabled="true"],
+button[aria-disabled="true"] {
+  cursor: not-allowed;
 }
 
 input,
