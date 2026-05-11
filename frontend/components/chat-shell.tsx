@@ -184,29 +184,16 @@ export function ChatShell() {
         </picture>
       </div>
 
-      <div
+      <Card
+        aria-label="AI chat interface"
         className={cn(
-          "relative w-full",
+          "relative grid w-full grid-rows-[auto_auto_minmax(0,1fr)_auto_auto] overflow-hidden",
+          "gap-3 p-3 sm:gap-4 sm:p-4 md:p-6",
           "max-w-[980px] xl:max-w-[1080px] 2xl:max-w-[1200px]",
           "h-[96svh] sm:h-[92svh] sm:max-h-[860px] xl:max-h-[940px] 2xl:max-h-[1020px]",
           "min-h-[520px]"
         )}
       >
-        {/* Decorative offset glass panels behind the main card to suggest
-            stacked depth, like the reference glassmorphism layout. Disabled
-            on small viewports to keep the mobile UI calm. */}
-        <div aria-hidden className="pointer-events-none absolute inset-0 hidden md:block">
-          <div className="absolute inset-0 -translate-x-3 -translate-y-2 -rotate-[1.5deg] rounded-3xl border border-white/20 bg-gradient-to-br from-white/[0.10] to-white/[0.03] backdrop-blur-xl backdrop-saturate-150 shadow-[0_30px_70px_-10px_rgba(2,6,23,0.45),inset_0_1px_0_rgba(255,255,255,0.28)]" />
-          <div className="absolute inset-0 translate-x-3 translate-y-2 rotate-[1.2deg] rounded-3xl border border-white/25 bg-gradient-to-br from-white/[0.12] to-white/[0.04] backdrop-blur-xl backdrop-saturate-150 shadow-[0_24px_60px_-8px_rgba(2,6,23,0.4),inset_0_1px_0_rgba(255,255,255,0.32)]" />
-        </div>
-
-        <Card
-          aria-label="AI chat interface"
-          className={cn(
-            "relative grid h-full w-full grid-rows-[auto_auto_minmax(0,1fr)_auto] overflow-hidden",
-            "gap-3 p-3 sm:gap-4 sm:p-4 md:p-6"
-          )}
-        >
         <ConnectionStatusCard
           statusText={statusText}
           hasError={Boolean(errorMessage) || (!isApiKeyVerified && keyFeedback !== null)}
@@ -304,8 +291,14 @@ export function ChatShell() {
           onSubmit={submitCurrentInput}
           onStop={stopCurrentRequest}
         />
-        </Card>
-      </div>
+
+        <p className="m-0 text-center text-[0.66rem] leading-snug text-slate-200/70 sm:text-[0.7rem]">
+          This is a non-commercial student project created for educational purposes only. All
+          trademarks, logos, and brand names are the property of their respective owners. Use of the
+          Coldplay name is intended only to describe the subject of this project and does not imply
+          any affiliation with or endorsement by Coldplay, Parlophone, or Live Nation.
+        </p>
+      </Card>
     </main>
   );
 }

@@ -7,19 +7,18 @@ const Card = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElemen
     <div
       ref={ref}
       className={cn(
-        // Professional glassmorphism surface.
-        // - subtle white tint with diagonal gradient (not flat gray) so the
-        //   surface reads as glass rather than a card.
-        // - strong backdrop blur + saturation boost so colour from the rainbow
-        //   background bleeds through with vibrancy.
-        // - crisp, semi-transparent white border for the glass edge.
-        // - inset top highlight (1px white) simulates light catching the rim.
+        // Genuinely transparent glassmorphism surface.
+        // - very light white tint so the colour behind shows through clearly
+        //   instead of being repainted as opaque blue.
+        // - moderate backdrop blur (~16px) for the frosted feel without
+        //   smearing the canvas into a solid wash.
+        // - crisp white border + 1px inset top highlight = the glass edge.
         // - large soft outer shadow gives depth/lift.
         "relative rounded-2xl text-white",
         "border border-white/35",
-        "bg-gradient-to-br from-white/[0.18] via-white/[0.08] to-white/[0.05]",
-        "backdrop-blur-2xl backdrop-saturate-150",
-        "shadow-[0_24px_70px_-12px_rgba(2,6,23,0.55),inset_0_1px_0_rgba(255,255,255,0.55),inset_0_-1px_0_rgba(255,255,255,0.05)]",
+        "bg-white/[0.06]",
+        "backdrop-blur-md backdrop-saturate-125",
+        "shadow-[0_24px_70px_-12px_rgba(2,6,23,0.5),inset_0_1px_0_rgba(255,255,255,0.55)]",
         className
       )}
       {...props}

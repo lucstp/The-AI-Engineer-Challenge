@@ -40,10 +40,9 @@ export function MessageList({
       aria-label="Conversation"
       className={cn(
         "relative flex min-h-0 flex-col gap-3 overflow-y-auto rounded-xl p-3 sm:p-4",
-        // Nested inside the glass Card; keep this surface lighter so the two
-        // glass layers do not fight. Soft inset top highlight only.
-        "border border-white/15 bg-white/[0.04]",
-        "shadow-[inset_0_1px_0_rgba(255,255,255,0.18)]"
+        // Nested inside the glass Card; no own background tint so the outer
+        // glass remains visible. Just a hairline border defines the area.
+        "border border-white/15"
       )}
     >
       {isLocked && !hasMessages ? (
