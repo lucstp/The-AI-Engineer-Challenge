@@ -38,7 +38,13 @@ export function MessageList({
     <section
       aria-live="polite"
       aria-label="Conversation"
-      className="relative flex min-h-0 flex-col gap-3 overflow-y-auto rounded-xl border border-gray-100/40 bg-gray-400/10 bg-clip-padding p-3 backdrop-blur-md sm:p-4"
+      className={cn(
+        "relative flex min-h-0 flex-col gap-3 overflow-y-auto rounded-xl p-3 sm:p-4",
+        // Nested inside the glass Card; keep this surface lighter so the two
+        // glass layers do not fight. Soft inset top highlight only.
+        "border border-white/15 bg-white/[0.04]",
+        "shadow-[inset_0_1px_0_rgba(255,255,255,0.18)]"
+      )}
     >
       {isLocked && !hasMessages ? (
         <div
