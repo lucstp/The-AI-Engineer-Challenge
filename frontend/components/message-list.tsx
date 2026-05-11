@@ -38,26 +38,26 @@ export function MessageList({
     <section
       aria-live="polite"
       aria-label="Conversation"
-      className="relative flex flex-col gap-3 overflow-y-auto rounded-xl border border-gray-100/40 bg-gray-400/10 bg-clip-padding p-3 backdrop-blur-md"
+      className="relative flex min-h-0 flex-col gap-3 overflow-y-auto rounded-xl border border-gray-100/40 bg-gray-400/10 bg-clip-padding p-3 backdrop-blur-md sm:p-4"
     >
-      {isLocked ? (
+      {isLocked && !hasMessages ? (
         <div
           role="note"
-          className="absolute inset-2 z-10 flex flex-col items-center justify-center gap-1 rounded-lg border border-amber-300/40 bg-slate-950/65 p-4 text-center backdrop-blur-md"
+          className="m-auto flex w-full max-w-[480px] flex-col items-center justify-center gap-2 rounded-lg border border-amber-300/40 bg-slate-950/55 p-5 text-center backdrop-blur-md"
         >
-          <p className="m-0 font-bold text-white">Verify your OpenAI key to begin</p>
+          <p className="m-0 text-base font-bold text-white sm:text-lg">
+            Verify your OpenAI key to begin
+          </p>
           <p className="m-0 text-sm text-slate-200">
-            Chat input is disabled until key verification completes.
+            Enter your key in the panel above to unlock the chat input and example prompts.
           </p>
         </div>
-      ) : null}
-
-      {!hasMessages ? (
+      ) : !hasMessages ? (
         <div className="m-auto w-full max-w-[620px] p-4 text-center">
-          <h2 className="m-0 mb-2 bg-gradient-to-br from-amber-300 via-rose-300 to-sky-300 bg-clip-text text-2xl font-extrabold tracking-tight text-transparent">
+          <h2 className="m-0 mb-2 bg-gradient-to-br from-amber-300 via-rose-300 to-sky-300 bg-clip-text text-xl font-extrabold tracking-tight text-transparent sm:text-2xl">
             Your Coldplay knowledge space is ready
           </h2>
-          <p className="mx-auto mb-4 max-w-[52ch] text-slate-200">
+          <p className="mx-auto mb-4 max-w-[52ch] text-sm text-slate-200 sm:text-base">
             Ask about songs, albums, eras, tours, members, and official releases. This assistant is
             scoped for Coldplay-only chat.
           </p>
@@ -68,7 +68,6 @@ export function MessageList({
                 type="button"
                 variant="secondary"
                 size="sm"
-                disabled={isLocked}
                 onClick={() => onChooseExamplePrompt(prompt)}
               >
                 {prompt}
@@ -113,10 +112,7 @@ export function MessageList({
       )}
 
       {isLoading ? (
-        <article
-          aria-label="Assistant thinking"
-          className="self-start text-slate-100"
-        >
+        <article aria-label="Assistant thinking" className="self-start text-slate-100">
           <p className="m-0 inline-flex items-center gap-1.5">
             <span className="thinking-dot" />
             <span className="thinking-dot" />
@@ -128,10 +124,16 @@ export function MessageList({
       {errorMessage ? (
         <div
           role="alert"
-          className="flex items-center justify-between gap-3 rounded-md border border-rose-300/50 bg-rose-900/40 px-3 py-2 text-sm text-rose-100"
+          className="flex flex-col items-start justify-between gap-2 rounded-md border border-rose-300/50 bg-rose-900/40 px-3 py-2 text-sm text-rose-100 sm:flex-row sm:items-center sm:gap-3"
         >
           <span>{errorMessage}</span>
-          <Button type="button" variant="outline" size="sm" onClick={onDismissError}>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={onDismissError}
+            className="self-end sm:self-auto"
+          >
             Dismiss
           </Button>
         </div>

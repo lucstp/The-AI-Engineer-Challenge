@@ -23,7 +23,11 @@ body {
     Arial,
     sans-serif;
   color: #ffffff;
-  background: #0e2c52;
+  /* Coldplay Moon Music style mid blue. Keeps rainbows vibrant via screen blend. */
+  background:
+    radial-gradient(ellipse at 50% 40%, rgba(255, 255, 255, 0.06) 0%, transparent 60%),
+    linear-gradient(180deg, #246fa3 0%, #1c5685 100%);
+  background-attachment: fixed;
   cursor:
     url("https://eustore.coldplay.com/cdn/shop/files/heart_favicon.png?v=1770660766") 16 16,
     auto;
@@ -59,8 +63,17 @@ textarea {
 .footer__bg-2-img {
   position: absolute;
   display: block;
-  width: clamp(520px, 70vw, 1200px);
+  width: clamp(360px, 72vw, 1500px);
   line-height: 0;
+}
+
+@media (max-width: 640px) {
+  .header__bg-img,
+  .header__bg-2-img,
+  .footer__bg-img,
+  .footer__bg-2-img {
+    width: clamp(280px, 90vw, 520px);
+  }
 }
 
 .header__bg-img {

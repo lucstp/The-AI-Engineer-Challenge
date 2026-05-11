@@ -144,7 +144,7 @@ export function ChatShell() {
   }
 
   return (
-    <main className="relative flex min-h-screen items-center justify-center overflow-hidden p-4 isolate">
+    <main className="relative isolate flex min-h-[100svh] items-center justify-center overflow-hidden p-2 sm:p-4 lg:p-6">
       <div className="global-graphics" aria-hidden>
         <picture className="header__bg-img">
           <img
@@ -186,7 +186,13 @@ export function ChatShell() {
 
       <Card
         aria-label="AI chat interface"
-        className="relative grid w-full max-w-[980px] grid-rows-[auto_auto_1fr_auto] gap-4 p-4 md:p-6 h-[92vh] max-h-[860px]"
+        className={cn(
+          "relative grid w-full grid-rows-[auto_auto_minmax(0,1fr)_auto] overflow-hidden",
+          "gap-3 p-3 sm:gap-4 sm:p-4 md:p-6",
+          "max-w-[980px] xl:max-w-[1080px] 2xl:max-w-[1200px]",
+          "h-[96svh] sm:h-[92svh] sm:max-h-[860px] xl:max-h-[940px] 2xl:max-h-[1020px]",
+          "min-h-[520px]"
+        )}
       >
         <ConnectionStatusCard
           statusText={statusText}
