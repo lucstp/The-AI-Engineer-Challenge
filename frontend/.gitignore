@@ -29,3 +29,10 @@ pnpm-debug.log*
 .env
 .env.*
 !.env.example
+
+
+# Test build output (Playwright runs against a prod build)
+.next-test/
+
+# Local-only dev assets (paid IP — Vercel Blob is the production source).
+private/
