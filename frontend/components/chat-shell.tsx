@@ -3,7 +3,6 @@
 import { FormEvent, useEffect, useRef, useState, useTransition } from "react";
 
 import { verifyOpenAiKeyAction } from "@/app/actions";
-import { BackendConnectionPanel } from "@/components/backend-connection-panel";
 import { ChatComposer } from "@/components/chat-composer";
 import { ConnectionStatusCard } from "@/components/connection-status-card";
 import { MessageList } from "@/components/message-list";
@@ -200,14 +199,7 @@ export function ChatShell() {
         />
 
         <div className="relative">
-          {showBackendPanel ? (
-            <div className="panel-enter">
-              <BackendConnectionPanel
-                backendBaseUrl={backendBaseUrl}
-                verificationMessage="Key verified. You can start chatting."
-              />
-            </div>
-          ) : (
+          {showBackendPanel ? null : (
             <Card
               aria-label="OpenAI key verification"
               className={cn(isSwappingPanel ? "panel-exit" : "panel-enter")}
