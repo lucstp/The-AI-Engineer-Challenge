@@ -1,0 +1,60 @@
+import * as React from "react";
+import { Slot } from "@radix-ui/react-slot";
+import { cva, type VariantProps } from "class-variance-authority";
+
+import { cn } from "@/lib/utils";
+
+const buttonVariants = cva(
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent disabled:pointer-events-none disabled:opacity-50",
+  {
+    variants: {
+      variant: {
+        // Clean white-on-glass primary action. Reads as a printed card on
+        // top of the glass surface; harmonizes with the cool background
+        // instead of fighting it.
+        default:
+          "bg-white text-slate-900 border border-white/60 shadow-md hover:bg-white/95 hover:-translate-y-px",
+        // Refined rose for stop / destructive actions; not neon hot-pink.
+        destructive:
+          "bg-rose-500/95 text-white border border-rose-200/40 shadow-md hover:bg-rose-500",
+        outline:
+          "border border-white/40 bg-white/10 text-white backdrop-blur-sm hover:bg-white/20",
+        ghost: "text-white hover:bg-white/10",
+        secondary:
+          "bg-white/15 text-white border border-white/30 backdrop-blur-sm hover:bg-white/25"
+      },
+      size: {
+        default: "h-10 px-4 py-2",
+        sm: "h-9 rounded-md px-3",
+        lg: "h-11 rounded-md px-6",
+        icon: "h-10 w-10"
+      }
+    },
+    defaultVariants: {
+      variant: "default",
+      size: "default"
+    }
+  }
+);
+
+export interface ButtonProps
+  extends React.ButtonHTMLAttributes<HTMLButtonElement>,
+    VariantProps<typeof buttonVariants> {
+  asChild?: boolean;
+}
+
+const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
+  ({ className, variant, size, asChild = false, ...props }, ref) => {
+    const Comp = asChild ? Slot : "button";
+    return (
+      <Comp
+        className={cn(buttonVariants({ variant, size, className }))}
+        ref={ref}
+        {...props}
+      />
+    );
+  }
+);
+Button.displayName = "Button";
+
+export { Button, buttonVariants };

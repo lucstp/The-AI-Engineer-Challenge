@@ -1,0 +1,377 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+:root {
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  min-height: 100%;
+  font-family:
+    "Inter",
+    "SF Pro Text",
+    "Segoe UI",
+    Roboto,
+    Helvetica,
+    Arial,
+    sans-serif;
+  color: #ffffff;
+  background:
+    radial-gradient(circle at 18% 18%, rgba(125, 249, 255, 0.34), transparent 34%),
+    radial-gradient(circle at 86% 15%, rgba(244, 114, 182, 0.24), transparent 36%),
+    radial-gradient(circle at 48% 88%, rgba(253, 224, 71, 0.2), transparent 38%),
+    linear-gradient(135deg, #2b95c8 0%, #266fb6 42%, #2656a8 72%, #287f9f 100%);
+  background-attachment: fixed;
+  cursor:
+    url("https://eustore.coldplay.com/cdn/shop/files/heart_favicon.png?v=1770660766") 16 16,
+    auto;
+}
+
+/* Clickable surfaces show the standard OS pointer, not the heart, so the
+   user can tell at a glance what is interactive vs. decorative. */
+a,
+button,
+[role="button"],
+[type="submit"],
+[type="button"],
+label[for] {
+  cursor: pointer;
+}
+
+button:disabled,
+[role="button"][aria-disabled="true"],
+button[aria-disabled="true"] {
+  cursor: not-allowed;
+}
+
+input,
+textarea {
+  cursor: text;
+}
+
+/* Coldplay Moon Music style background graphics, layered like the official site. */
+.global-graphics {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  z-index: -1;
+  pointer-events: none;
+}
+
+.global-graphics::before,
+.global-graphics::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.global-graphics::before {
+  background:
+    radial-gradient(ellipse at 50% 22%, rgba(255, 255, 255, 0.16), transparent 28%),
+    radial-gradient(ellipse at 18% 65%, rgba(34, 211, 238, 0.18), transparent 30%),
+    radial-gradient(ellipse at 84% 68%, rgba(245, 158, 11, 0.18), transparent 32%);
+  mix-blend-mode: screen;
+}
+
+.global-graphics::after {
+  background:
+    linear-gradient(90deg, rgba(4, 10, 28, 0.08), transparent 18%, transparent 82%, rgba(4, 10, 28, 0.08)),
+    radial-gradient(ellipse at center, transparent 46%, rgba(2, 6, 23, 0.22) 100%);
+}
+
+.header__bg-img,
+.header__bg-2-img,
+.footer__bg-img,
+.footer__bg-2-img {
+  position: absolute;
+  display: block;
+  width: clamp(420px, 78vw, 1640px);
+  line-height: 0;
+}
+
+@media (max-width: 640px) {
+  .header__bg-img,
+  .header__bg-2-img,
+  .footer__bg-img,
+  .footer__bg-2-img {
+    width: clamp(280px, 90vw, 520px);
+  }
+}
+
+.header__bg-img {
+  top: -8%;
+  left: -6%;
+  animation: rainbow-drift-a 24s ease-in-out infinite alternate;
+}
+
+.header__bg-2-img {
+  top: -8%;
+  right: -6%;
+  animation: rainbow-drift-b 28s ease-in-out infinite alternate;
+}
+
+.footer__bg-img {
+  bottom: -8%;
+  left: -6%;
+  animation: rainbow-drift-c 26s ease-in-out infinite alternate;
+}
+
+.footer__bg-2-img {
+  bottom: -8%;
+  right: -6%;
+  animation: rainbow-drift-d 27s ease-in-out infinite alternate;
+}
+
+.header__bg,
+.footer__bg {
+  display: block;
+  width: 100%;
+  height: auto;
+  opacity: 1;
+  mix-blend-mode: screen;
+  filter: saturate(1.38) contrast(1.05);
+}
+
+.footer__bg-2-img .footer__bg {
+  transform: scaleX(-1);
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@keyframes rainbow-drift-a {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(2%, 1.5%, 0);
+  }
+}
+
+@keyframes rainbow-drift-b {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(-2%, 2%, 0);
+  }
+}
+
+@keyframes rainbow-drift-c {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(2%, -2%, 0);
+  }
+}
+
+@keyframes rainbow-drift-d {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(-2%, -2%, 0);
+  }
+}
+
+@keyframes panel-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.99);
+    filter: blur(3px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+}
+
+@keyframes panel-out {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.995);
+    filter: blur(2px);
+  }
+}
+
+.panel-enter {
+  animation: panel-in 220ms cubic-bezier(0.22, 0.61, 0.36, 1) both;
+}
+
+.panel-exit {
+  animation: panel-out 180ms cubic-bezier(0.4, 0, 1, 1) both;
+}
+
+/* Outer chat shell: ONE true glass panel (Tailwind glassmorphism reference).
+   Low-opacity translucent fill + clean blur + crisp 1px rim + soft drop shadow.
+   No multi-gradient pile-up: keeps the panel readable and lets the colorful
+   Coldplay background actually show through (which IS the whole point of glass). */
+.chat-shell-glass {
+  border-radius: 1.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(22px) saturate(170%);
+  -webkit-backdrop-filter: blur(22px) saturate(170%);
+  box-shadow:
+    0 24px 60px rgba(2, 14, 40, 0.42),
+    inset 0 1px 0 rgba(255, 255, 255, 0.4);
+}
+
+/* Subtle top-down sheen, gives the glass its "lit edge" highlight. */
+.chat-shell-glass::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: linear-gradient(
+    160deg,
+    rgba(255, 255, 255, 0.16) 0%,
+    rgba(255, 255, 255, 0.04) 38%,
+    rgba(255, 255, 255, 0) 100%
+  );
+}
+
+/* Inner controls: quiet, transparent — never compete with the outer glass.
+   A barely-there stroke gives shape; no second backdrop-filter (one blur layer
+   wins on GPU and visually). */
+.aurora-control {
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.04);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18);
+}
+
+/* Conversation area: fully transparent. The outer glass shell IS the surface. */
+.conversation-surface {
+  border: none;
+  background: transparent;
+  box-shadow: none;
+}
+
+/* Locked-state callout: subtle quiet panel (no heavy shadow / no second blur). */
+.spotlight-card {
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.05);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22);
+}
+
+.aurora-button {
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(190, 242, 255, 0.94) 45%, rgba(253, 230, 138, 0.94));
+  color: #071225;
+  border-color: rgba(255, 255, 255, 0.72);
+  box-shadow:
+    0 14px 32px rgba(8, 47, 73, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.86);
+}
+
+.aurora-button:hover {
+  background:
+    linear-gradient(135deg, #ffffff, #d9fbff 45%, #fff0a8);
+}
+
+/* Example prompts: intentionally readable affordance cards (these SHOULD pop
+   slightly so users see them as the primary CTA). Kept lightweight: single
+   translucent fill + accent stripe, no second backdrop-filter. */
+.prompt-glass {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  background: rgba(255, 255, 255, 0.06);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25);
+}
+
+.prompt-glass::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 4px;
+  background: linear-gradient(180deg, #22d3ee, #a78bfa 52%, #facc15);
+}
+
+.chat-scrollbar {
+  scrollbar-color: rgba(255, 255, 255, 0.42) rgba(255, 255, 255, 0.08);
+  scrollbar-width: thin;
+}
+
+.chat-scrollbar::-webkit-scrollbar {
+  width: 10px;
+}
+
+.chat-scrollbar::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 999px;
+}
+
+.chat-scrollbar::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, rgba(125, 249, 255, 0.7), rgba(255, 255, 255, 0.32));
+  border: 2px solid rgba(8, 23, 50, 0.55);
+  border-radius: 999px;
+}
+
+@keyframes dot-pulse {
+  0%,
+  80%,
+  100% {
+    transform: scale(0.7);
+    opacity: 0.45;
+  }
+  40% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.thinking-dot {
+  width: 0.46rem;
+  height: 0.46rem;
+  border-radius: 9999px;
+  background: #fde68a;
+  display: inline-block;
+  animation: dot-pulse 1s infinite ease-in-out;
+}
+
+.thinking-dot:nth-child(2) {
+  animation-delay: 120ms;
+}
+
+.thinking-dot:nth-child(3) {
+  animation-delay: 220ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition-duration: 0.001ms !important;
+    transition-delay: 0ms !important;
+    scroll-behavior: auto !important;
+  }
+}
