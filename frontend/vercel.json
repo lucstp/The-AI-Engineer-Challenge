@@ -1,0 +1,14 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "regions": ["iad1"],
+  "functions": {
+    "app/api/chat/route.ts": {
+      "maxDuration": 60,
+      "memory": 1024
+    },
+    "app/api/csp-report/route.ts": {
+      "maxDuration": 5,
+      "memory": 256
+    }
+  }
+}
