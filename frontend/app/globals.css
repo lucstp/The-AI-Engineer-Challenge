@@ -614,28 +614,12 @@ textarea {
   border-radius: calc(0.5rem - 1px);
 }
 
-/* Verify-button breathing glow for the locked-state CTA. Uses the existing
-   aurora-pill-breathe keyframe so the visual language stays in family. */
+/* Verify-button interior — wrapped in `.locked-input-ring` (the same wrapper
+   the Input uses) so the animated prism gradient border + height come from
+   the wrapper. This class just styles the button's interior surface so it
+   reads as a clear CTA against the dark page. */
 .locked-verify-btn {
   position: relative;
-  animation: locked-verify-breathe 4s ease-in-out infinite;
-}
-
-@keyframes locked-verify-breathe {
-  0%,
-  100% {
-    box-shadow:
-      0 14px 32px rgba(8, 47, 73, 0.22),
-      0 0 18px rgba(125, 249, 255, 0.28),
-      inset 0 1px 0 rgba(255, 255, 255, 0.86);
-  }
-  50% {
-    box-shadow:
-      0 14px 32px rgba(8, 47, 73, 0.22),
-      0 0 28px rgba(125, 249, 255, 0.55),
-      0 0 48px rgba(167, 139, 250, 0.3),
-      inset 0 1px 0 rgba(255, 255, 255, 0.86);
-  }
 }
 
 /* Outer chat shell: DARK glass — the content well. Light hero + bright aurora

@@ -2,6 +2,7 @@ import { cookies } from "next/headers";
 
 import { ChatShell } from "@/components/chat/chat-shell";
 import { AuroraBackground } from "@/components/decoration/aurora-background";
+import { HeartDoodle } from "@/components/decoration/heart-doodle";
 import { LoveIsTheOnlyAnswer } from "@/components/decoration/love-is-the-only-answer";
 import { DisclaimerFooter } from "@/components/layout/disclaimer-footer";
 import { Hero } from "@/components/layout/hero";
@@ -35,6 +36,28 @@ export default async function HomePage() {
           shell consumes too much horizontal real estate to fit them. */}
       <LoveIsTheOnlyAnswer className="pointer-events-none absolute top-[18%] z-0 hidden w-[220px] opacity-90 2xl:block 2xl:right-[calc(50%_+_540px)] min-[1800px]:top-[22%] min-[1800px]:w-[260px]" />
       <LoveIsTheOnlyAnswer className="pointer-events-none absolute top-1/2 z-0 hidden w-[220px] -translate-y-1/2 opacity-90 2xl:block 2xl:left-[calc(50%_+_540px)] min-[1800px]:w-[260px]" />
+
+      {/* Heart doodles — ambient warmth, confined to the TOP HALF of the
+          viewport so they never land ON the crowd silhouette (which fills
+          the bottom 55vh after key verification). Balanced 2 red + 1
+          purple for color variety. Subtle rotations + low opacity keep
+          them as accents, not focal elements. Hidden below md to avoid
+          crowding on small screens. */}
+      <HeartDoodle
+        variant="purple"
+        size={36}
+        className="absolute top-[5%] right-[6%] z-10 hidden -rotate-12 opacity-80 md:block lg:top-[7%] lg:right-[8%]"
+      />
+      <HeartDoodle
+        variant="red"
+        size={40}
+        className="absolute top-[10%] left-[6%] z-10 hidden rotate-6 opacity-85 md:block"
+      />
+      <HeartDoodle
+        variant="red"
+        size={32}
+        className="absolute top-[36%] right-[4%] z-10 hidden rotate-12 opacity-80 md:block"
+      />
 
       <AuroraBackground />
 
