@@ -5,6 +5,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 interface TypewriterTextProps {
   text: string;
   animate: boolean;
+  durationMs?: number;
   onAnimationDone?: () => void;
 }
 
@@ -25,7 +26,8 @@ function usePrefersReducedMotion(): boolean {
 export function TypewriterText({
   text,
   animate,
-  onAnimationDone
+  durationMs,
+  onAnimationDone,
 }: TypewriterTextProps) {
   const reducedMotion = usePrefersReducedMotion();
   const shouldAnimate = animate && !reducedMotion;
@@ -37,7 +39,7 @@ export function TypewriterText({
       return [text];
     }
 
-    const targetDurationMs = Math.min(900, Math.max(220, text.length * 4));
+    const targetDurationMs = durationMs ?? Math.min(900, Math.max(220, text.length * 4));
     const idealFrameCount = Math.max(8, Math.min(42, Math.round(targetDurationMs / 22)));
     const chunkSize = Math.max(1, Math.ceil(text.length / idealFrameCount));
     const chunks: string[] = [];
@@ -48,7 +50,7 @@ export function TypewriterText({
       chunks.push(text);
     }
     return chunks;
-  }, [shouldAnimate, text]);
+  }, [durationMs, shouldAnimate, text]);
 
   useEffect(() => {
     doneRef.current = false;
@@ -63,7 +65,7 @@ export function TypewriterText({
 
     setVisibleText("");
     let frameIndex = 0;
-    const totalDurationMs = Math.min(900, Math.max(220, text.length * 4));
+    const totalDurationMs = durationMs ?? Math.min(900, Math.max(220, text.length * 4));
     const stepMs = Math.max(12, Math.round(totalDurationMs / Math.max(frames.length, 1)));
 
     const timer = window.setInterval(() => {
@@ -82,7 +84,7 @@ export function TypewriterText({
     return () => {
       window.clearInterval(timer);
     };
-  }, [frames, onAnimationDone, shouldAnimate, text]);
+  }, [durationMs, frames, onAnimationDone, shouldAnimate, text]);
 
   return <>{visibleText}</>;
 }

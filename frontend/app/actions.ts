@@ -77,3 +77,13 @@ export async function verifyOpenAiKeyAction(rawKey: string): Promise<VerifyKeyRe
     };
   }
 }
+
+/**
+ * Powers the Disconnect button in `ConnectionStatusCard`: clears the
+ * key cookie server-side so the next request is unverified. Hardened in
+ * PR 7 with sealed-cookie deletion semantics + structured logging.
+ */
+export async function clearVerifiedKeyAction(): Promise<void> {
+  const cookieStore = await cookies();
+  cookieStore.delete(OPENAI_API_KEY_COOKIE);
+}

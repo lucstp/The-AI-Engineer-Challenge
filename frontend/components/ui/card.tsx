@@ -4,25 +4,7 @@ import { cn } from "@/lib/utils";
 
 const Card = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
   ({ className, ...props }, ref) => (
-    <div
-      ref={ref}
-      className={cn(
-        // Genuinely transparent glassmorphism surface.
-        // - very light white tint so the colour behind shows through clearly
-        //   instead of being repainted as opaque blue.
-        // - moderate backdrop blur (~16px) for the frosted feel without
-        //   smearing the canvas into a solid wash.
-        // - crisp white border + 1px inset top highlight = the glass edge.
-        // - large soft outer shadow gives depth/lift.
-        "relative rounded-2xl text-white",
-        "border border-white/35",
-        "bg-white/[0.06]",
-        "backdrop-blur-md backdrop-saturate-125",
-        "shadow-[0_24px_70px_-12px_rgba(2,6,23,0.5),inset_0_1px_0_rgba(255,255,255,0.55)]",
-        className
-      )}
-      {...props}
-    />
+    <div ref={ref} className={cn("chat-shell-glass", className)} {...props} />
   )
 );
 Card.displayName = "Card";
@@ -38,7 +20,7 @@ const CardTitle = React.forwardRef<HTMLParagraphElement, React.HTMLAttributes<HT
   ({ className, ...props }, ref) => (
     <h3
       ref={ref}
-      className={cn("text-base font-bold leading-tight tracking-tight text-white", className)}
+      className={cn("font-bold text-base text-white leading-tight tracking-tight", className)}
       {...props}
     />
   )
@@ -49,7 +31,7 @@ const CardDescription = React.forwardRef<
   HTMLParagraphElement,
   React.HTMLAttributes<HTMLParagraphElement>
 >(({ className, ...props }, ref) => (
-  <p ref={ref} className={cn("text-sm text-slate-200/90", className)} {...props} />
+  <p ref={ref} className={cn("text-slate-200/90 text-sm", className)} {...props} />
 ));
 CardDescription.displayName = "CardDescription";
 
@@ -67,4 +49,4 @@ const CardFooter = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDiv
 );
 CardFooter.displayName = "CardFooter";
 
-export { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter };
+export { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle };
