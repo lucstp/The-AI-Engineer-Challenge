@@ -1,0 +1,193 @@
+import { cookies } from "next/headers";
+import { NextResponse } from "next/server";
+
+import {
+  chatRequestSchema,
+  isPlausibleOpenAiKey,
+  openAiErrorResponseSchema,
+  openAiStreamChunkSchema,
+} from "@/lib/schemas";
+
+export const runtime = "nodejs";
+
+const OPENAI_API_KEY_COOKIE = "openai_api_key";
+const OPENAI_CHAT_COMPLETIONS_ENDPOINT = "https://api.openai.com/v1/chat/completions";
+const OPENAI_TIMEOUT_MS = 60_000;
+const OPENAI_MODEL = process.env.OPENAI_MODEL ?? "gpt-5";
+const OPENAI_MAX_TOKENS = Number(process.env.OPENAI_MAX_COMPLETION_TOKENS ?? 280);
+
+const COLDPLAY_SYSTEM_PROMPT = [
+  "You are a Coldplay-only assistant. Answer only questions about Coldplay, ",
+  "including members, albums, songs, tours, timelines, and related official ",
+  "context. If the user asks about non-Coldplay topics, politely refuse and ",
+  "redirect to Coldplay-focused help.\n\n",
+  "Formatting rules (always follow these):\n",
+  "- Use markdown. Wrap ALL proper nouns in **bold**: band names (Coldplay), ",
+  "member full names (Chris Martin, Jonny Buckland, Guy Berryman, Will Champion), ",
+  "song titles, album titles, tour names, EP names, label names, collaborator ",
+  "names, and venue names.\n",
+  "- Use numbered lists for sequences (members, timelines, chronological items).\n",
+  "- Use bullet lists for related non-sequential items.\n",
+  "- Keep paragraphs concise (2-3 sentences max where possible).\n",
+  "- Italicize emotional/descriptive phrases sparingly with *single asterisks*.\n",
+  "- Do not use headings (#) inline — keep responses flowing prose + lists.",
+].join("");
+
+export async function POST(request: Request): Promise<Response> {
+  const requestId = crypto.randomUUID();
+
+  let body: unknown;
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json(
+      { detail: "Invalid JSON body." },
+      { status: 400, headers: { "x-request-id": requestId } }
+    );
+  }
+
+  const parsed = chatRequestSchema.safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json(
+      { detail: parsed.error.issues[0]?.message ?? "Invalid request." },
+      { status: 400, headers: { "x-request-id": requestId } }
+    );
+  }
+
+  // Raw key cookie — PR 7 wraps this with AES-256-GCM unseal here, adds
+  // a same-origin guard above this read, and PR 8 layers a sliding-window
+  // rate limit before any of this work happens.
+  const cookieStore = await cookies();
+  const keyCookie = cookieStore.get(OPENAI_API_KEY_COOKIE)?.value;
+  if (!keyCookie || !isPlausibleOpenAiKey(keyCookie)) {
+    return NextResponse.json(
+      { detail: "OpenAI key not verified. Please re-enter your key." },
+      { status: 401, headers: { "x-request-id": requestId } }
+    );
+  }
+
+  const timeoutController = new AbortController();
+  const timeoutHandle = setTimeout(() => timeoutController.abort(), OPENAI_TIMEOUT_MS);
+
+  let upstream: Response;
+  try {
+    upstream = await fetch(OPENAI_CHAT_COMPLETIONS_ENDPOINT, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${keyCookie}`,
+      },
+      body: JSON.stringify({
+        model: OPENAI_MODEL,
+        messages: [
+          { role: "system", content: COLDPLAY_SYSTEM_PROMPT },
+          { role: "user", content: parsed.data.message },
+        ],
+        stream: true,
+        max_completion_tokens: OPENAI_MAX_TOKENS,
+      }),
+      signal: timeoutController.signal,
+    });
+  } catch (error) {
+    clearTimeout(timeoutHandle);
+    if (error instanceof DOMException && error.name === "AbortError") {
+      return NextResponse.json(
+        { detail: "Upstream OpenAI request timed out." },
+        { status: 504, headers: { "x-request-id": requestId } }
+      );
+    }
+    return NextResponse.json(
+      { detail: "Failed to reach OpenAI." },
+      { status: 502, headers: { "x-request-id": requestId } }
+    );
+  }
+
+  clearTimeout(timeoutHandle);
+
+  if (!upstream.ok) {
+    let detail = "OpenAI returned an error.";
+    try {
+      const errorRaw = await upstream.json();
+      const errorParsed = openAiErrorResponseSchema.safeParse(errorRaw);
+      if (errorParsed.success) {
+        detail = errorParsed.data.error.message;
+      }
+    } catch {
+      // ignore unparseable upstream error body
+    }
+    return NextResponse.json(
+      { detail },
+      { status: upstream.status, headers: { "x-request-id": requestId } }
+    );
+  }
+
+  if (!upstream.body) {
+    return NextResponse.json(
+      { detail: "Upstream returned no stream body." },
+      { status: 502, headers: { "x-request-id": requestId } }
+    );
+  }
+
+  // Pipe OpenAI SSE → plain text content deltas. We strip the SSE
+  // envelope on the server so the client (streamChatMessage) stays simple:
+  // it just decodes UTF-8 chunks and appends them to the rendered message.
+  const stream = new ReadableStream<Uint8Array>({
+    async start(controller) {
+      const reader = upstream.body!.getReader();
+      const decoder = new TextDecoder();
+      const encoder = new TextEncoder();
+      let buffer = "";
+
+      try {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) {
+            break;
+          }
+          if (!value) {
+            continue;
+          }
+
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split("\n");
+          buffer = lines.pop() ?? "";
+
+          for (const rawLine of lines) {
+            const line = rawLine.trim();
+            if (!line.startsWith("data:")) {
+              continue;
+            }
+            const payload = line.slice(5).trim();
+            if (!payload || payload === "[DONE]") {
+              continue;
+            }
+
+            try {
+              const chunk = openAiStreamChunkSchema.parse(JSON.parse(payload));
+              const content = chunk.choices[0]?.delta.content;
+              if (typeof content === "string" && content.length > 0) {
+                controller.enqueue(encoder.encode(content));
+              }
+            } catch {
+              // Malformed/unsupported chunk shape — skip rather than tear
+              // down the whole stream for the user.
+            }
+          }
+        }
+      } catch (error) {
+        controller.error(error);
+        return;
+      } finally {
+        controller.close();
+      }
+    },
+  });
+
+  return new Response(stream, {
+    headers: {
+      "Content-Type": "text/plain; charset=utf-8",
+      "Cache-Control": "no-cache, no-transform",
+      "x-request-id": requestId,
+    },
+  });
+}
