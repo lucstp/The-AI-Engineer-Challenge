@@ -1,8 +1,6 @@
-export type Role = "user" | "assistant";
-
-export interface ChatMessage {
-  id: string;
-  role: Role;
-  content: string;
-  animate?: boolean;
-}
+/**
+ * Domain types are inferred from zod schemas (single source of truth).
+ * This file exists for backwards-compatible imports — new code should
+ * import directly from `@/lib/schemas`.
+ */
+export type { ChatMessage, ChatRequest, PersistedChatUiState, Role } from "@/lib/schemas";

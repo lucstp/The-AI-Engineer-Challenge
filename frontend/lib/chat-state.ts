@@ -1,4 +1,10 @@
-import { ChatMessage } from "@/lib/chat-types";
+import type { ChatMessage } from "@/lib/chat-types";
+
+interface CreateMessageOptions {
+  animate?: boolean;
+  createdAt?: number;
+  typingMs?: number;
+}
 
 export function createMessageId(): string {
   if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
@@ -8,20 +14,29 @@ export function createMessageId(): string {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
 }
 
-export function createUserMessage(content: string): ChatMessage {
+export function createUserMessage(
+  content: string,
+  options: CreateMessageOptions = {}
+): ChatMessage {
   return {
     id: createMessageId(),
     role: "user",
-    content
+    content,
+    createdAt: options.createdAt ?? Date.now(),
   };
 }
 
-export function createAssistantMessage(content: string): ChatMessage {
+export function createAssistantMessage(
+  content: string,
+  options: CreateMessageOptions = {}
+): ChatMessage {
   return {
     id: createMessageId(),
     role: "assistant",
     content,
-    animate: true
+    createdAt: options.createdAt ?? Date.now(),
+    animate: options.animate ?? true,
+    typingMs: options.typingMs,
   };
 }
 
