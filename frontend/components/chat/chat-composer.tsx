@@ -1,0 +1,121 @@
+import { ArrowUp, Sparkles } from "lucide-react";
+import type { FormEvent, KeyboardEvent } from "react";
+
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+
+interface ChatComposerProps {
+  value: string;
+  isLoading: boolean;
+  isDisabled: boolean;
+  onChange: (value: string) => void;
+  onSubmit: () => void;
+  onStop: () => void;
+}
+
+const QUICK_COLDPLAY_PROMPTS = [
+  "Give me a short story behind 'Fix You'.",
+  "What's the emotional arc of A Rush of Blood to the Head?",
+  "Build me a 5-song Coldplay playlist for a night drive.",
+  "Which Coldplay songs are best for healing after a hard day?",
+  "Explain Moon Music in a concise, poetic way.",
+];
+
+export function ChatComposer({
+  value,
+  isLoading,
+  isDisabled,
+  onChange,
+  onSubmit,
+  onStop,
+}: ChatComposerProps) {
+  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    onSubmit();
+  }
+
+  function handleKeyDown(event: KeyboardEvent<HTMLTextAreaElement>) {
+    if (event.key === "Enter" && !event.shiftKey) {
+      event.preventDefault();
+      onSubmit();
+    }
+  }
+
+  function insertRandomPrompt() {
+    const availablePrompts = QUICK_COLDPLAY_PROMPTS.filter((prompt) => prompt !== value.trim());
+    const source = availablePrompts.length > 0 ? availablePrompts : QUICK_COLDPLAY_PROMPTS;
+    const randomPrompt = source[Math.floor(Math.random() * source.length)];
+    if (randomPrompt !== undefined) {
+      onChange(randomPrompt);
+    }
+  }
+
+  return (
+    <form
+      onSubmit={handleSubmit}
+      className={
+        isDisabled
+          ? "composer-shell opacity-55 transition-opacity duration-200"
+          : "composer-shell transition-opacity duration-200"
+      }
+    >
+      <Label htmlFor="chat-input" className="sr-only">
+        Type your message
+      </Label>
+      <Textarea
+        id="chat-input"
+        name="chat-input"
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        onKeyDown={handleKeyDown}
+        placeholder={
+          isDisabled
+            ? "Verify key above to begin"
+            : "Ask about Coldplay... (Enter to send, Shift+Enter for newline)"
+        }
+        rows={1}
+        disabled={isLoading || isDisabled}
+        className="composer-field max-h-36 min-h-[56px] resize-none rounded-none border-0 bg-transparent px-4 py-[0.92rem] text-[1.02rem] text-white shadow-none placeholder:text-white/66 focus-visible:border-0 focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0"
+      />
+      <div className="composer-tools">
+        {!isLoading ? (
+          <button
+            type="button"
+            onClick={insertRandomPrompt}
+            aria-label="Generate random Coldplay prompt"
+            title="Generate random Coldplay prompt"
+            className="composer-magic"
+          >
+            <Sparkles className="h-4 w-4" />
+          </button>
+        ) : null}
+        {isLoading ? (
+          <Button
+            type="button"
+            variant="destructive"
+            onClick={onStop}
+            aria-label="Stop current assistant response"
+            className="h-11 rounded-full px-5 shadow-[0_0_16px_rgba(244,63,94,0.48)]"
+          >
+            Stop
+          </Button>
+        ) : (
+          <Button
+            type="submit"
+            variant="ghost"
+            disabled={isDisabled || !value.trim()}
+            aria-label="Send message"
+            className="composer-send disabled:opacity-100 disabled:brightness-100"
+          >
+            <ArrowUp
+              strokeWidth={3.5}
+              className="text-white drop-shadow-[0_1px_2px_rgba(2,6,23,0.95)]"
+              style={{ width: 22, height: 22, flexShrink: 0 }}
+            />
+          </Button>
+        )}
+      </div>
+    </form>
+  );
+}
