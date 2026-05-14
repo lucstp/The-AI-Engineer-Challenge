@@ -1,3 +1,4 @@
+import { SoundToggle } from "@/components/sound/sound-toggle";
 import { cn } from "@/lib/utils";
 
 interface ConnectionStatusCardProps {
@@ -5,6 +6,13 @@ interface ConnectionStatusCardProps {
   hasError: boolean;
   onDisconnect?: () => void;
   isDisconnecting?: boolean;
+  /**
+   * Sound preference + toggle. Always present (locked + verified) so users
+   * can pre-mute before clicking Verify if they don't want the crowd
+   * ambience to start.
+   */
+  isSoundEnabled: boolean;
+  onToggleSound: () => void;
 }
 
 /**
@@ -18,15 +26,16 @@ interface ConnectionStatusCardProps {
  *   - Status pill keeps live, accessible feedback for connection / errors.
  *   - Disconnect is co-located here (its natural home) so verified users
  *     always have a clear sign-out path without a dedicated panel.
- *
- * PR 14 slots a SoundToggle into the row beside the status pill. Keeping
- * the prop surface narrow now so that addition is additive, not breaking.
+ *   - SoundToggle lives in this row so the user can mute/unmute at any
+ *     point in the session without leaving the chat surface.
  */
 export function ConnectionStatusCard({
   statusText,
   hasError,
   onDisconnect,
   isDisconnecting = false,
+  isSoundEnabled,
+  onToggleSound,
 }: ConnectionStatusCardProps) {
   return (
     <header className="chat-header">
@@ -37,6 +46,7 @@ export function ConnectionStatusCard({
         Chat
       </h1>
       <div className="flex items-center gap-2">
+        <SoundToggle isEnabled={isSoundEnabled} onToggle={onToggleSound} />
         <div
           role="status"
           aria-live="polite"

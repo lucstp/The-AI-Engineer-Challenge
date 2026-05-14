@@ -9,6 +9,10 @@
     "app/api/csp-report/route.ts": {
       "maxDuration": 5,
       "memory": 256
+    },
+    "app/api/audio/aerophonia/route.ts": {
+      "maxDuration": 30,
+      "memory": 256
     }
   }
 }
