@@ -6,17 +6,17 @@ import { LoveIsTheOnlyAnswer } from "@/components/decoration/love-is-the-only-an
 import { DisclaimerFooter } from "@/components/layout/disclaimer-footer";
 import { Hero } from "@/components/layout/hero";
 import { isPlausibleOpenAiKey } from "@/lib/schemas";
+import { unseal } from "@/lib/session-crypto";
 
 const OPENAI_API_KEY_COOKIE = "openai_api_key";
 
 export default async function HomePage() {
-  // Raw cookie value — PR 7 (cookie security) wraps this with AES-256-GCM
-  // seal/unseal so the cookie holds an opaque blob instead of the plaintext
-  // key. For now we just sanity-check shape with the shared schema.
+  // Cookie is AES-256-GCM sealed. unseal() returns null on any tamper or
+  // wrong-key failure, which we treat as "unverified" — fail closed.
   const cookieStore = await cookies();
-  const rawCookie = cookieStore.get(OPENAI_API_KEY_COOKIE)?.value;
-  const initialIsApiKeyVerified =
-    typeof rawCookie === "string" && isPlausibleOpenAiKey(rawCookie);
+  const sealedKey = cookieStore.get(OPENAI_API_KEY_COOKIE)?.value;
+  const apiKey = typeof sealedKey === "string" ? unseal(sealedKey) : null;
+  const initialIsApiKeyVerified = apiKey !== null && isPlausibleOpenAiKey(apiKey);
 
   return (
     <main
