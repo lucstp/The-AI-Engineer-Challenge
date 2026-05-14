@@ -5,6 +5,7 @@ import remarkGfm from "remark-gfm";
 import { TypewriterText } from "@/components/chat/typewriter-text";
 import { Button } from "@/components/ui/button";
 import type { ChatMessage } from "@/lib/chat-types";
+import { fireOnUserAction } from "@/lib/confetti";
 import { cn } from "@/lib/utils";
 
 // Multi-channel typographic hierarchy for assistant markdown output.
@@ -200,7 +201,10 @@ export function MessageList({
                     type="button"
                     variant="ghost"
                     size="default"
-                    onClick={() => onChooseExamplePrompt(prompt)}
+                    onClick={() => {
+                      fireOnUserAction();
+                      onChooseExamplePrompt(prompt);
+                    }}
                     className="prompt-glass h-auto min-h-14 justify-start whitespace-normal rounded-2xl border-cyan-200/35 bg-linear-to-br from-white/12 via-cyan-200/12 to-fuchsia-200/12 px-5 py-3 pl-6 font-medium text-cyan-50 text-sm leading-relaxed shadow-[inset_0_1px_0_rgba(255,255,255,0.35),0_0_0_1px_rgba(186,230,253,0.16),0_0_24px_-8px_rgba(125,249,255,0.25)] backdrop-blur-xl transition-all duration-300 hover:-translate-y-1 hover:border-cyan-200/55 hover:bg-linear-to-br hover:from-cyan-200/18 hover:via-violet-300/16 hover:to-fuchsia-300/18 hover:text-white hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.5),0_0_0_1px_rgba(186,230,253,0.32),0_0_36px_-8px_rgba(125,249,255,0.45),0_0_60px_-12px_rgba(167,139,250,0.35)]"
                   >
                     {prompt}
@@ -304,7 +308,10 @@ export function MessageList({
                 type="button"
                 variant="ghost"
                 size="default"
-                onClick={() => onChooseExamplePrompt(prompt)}
+                onClick={() => {
+                  fireOnUserAction();
+                  onChooseExamplePrompt(prompt);
+                }}
                 className="prompt-glass h-auto min-h-14 justify-start whitespace-normal rounded-2xl border-cyan-200/35 bg-linear-to-br from-white/12 via-cyan-200/12 to-fuchsia-200/12 px-5 py-3 pl-6 font-medium text-cyan-50 text-sm leading-relaxed shadow-[inset_0_1px_0_rgba(255,255,255,0.35),0_0_0_1px_rgba(186,230,253,0.16),0_0_24px_-8px_rgba(125,249,255,0.25)] backdrop-blur-xl transition-all duration-300 hover:-translate-y-1 hover:border-cyan-200/55 hover:bg-linear-to-br hover:from-cyan-200/18 hover:via-violet-300/16 hover:to-fuchsia-300/18 hover:text-white hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.5),0_0_0_1px_rgba(186,230,253,0.32),0_0_36px_-8px_rgba(125,249,255,0.45),0_0_60px_-12px_rgba(167,139,250,0.35)]"
               >
                 {prompt}

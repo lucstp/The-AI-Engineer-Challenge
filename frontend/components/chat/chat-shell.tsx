@@ -9,6 +9,7 @@ import { CrowdSilhouette } from "@/components/decoration/crowd-silhouette";
 import { Card } from "@/components/ui/card";
 import { MovingBorder } from "@/components/ui/moving-border";
 import { completeAssistantAnimation } from "@/lib/chat-state";
+import { useAmbientConfetti } from "@/lib/hooks/use-ambient-confetti";
 import { useChatPersistence } from "@/lib/hooks/use-chat-persistence";
 import { useChatScroll } from "@/lib/hooks/use-chat-scroll";
 import { useChatStreaming } from "@/lib/hooks/use-chat-streaming";
@@ -67,6 +68,10 @@ export function ChatShell({ initialIsApiKeyVerified }: ChatShellProps) {
       delete document.body.dataset.chatLocked;
     };
   }, [isChatLocked]);
+
+  // Ambient confetti — fireworks + side cannons cycle while the chat is
+  // unlocked. Paused while locked, hidden tab, or `prefers-reduced-motion`.
+  useAmbientConfetti({ enabled: !isChatLocked });
 
   const streaming = useChatStreaming({
     isChatLocked,

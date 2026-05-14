@@ -4,6 +4,7 @@ import type { FormEvent, KeyboardEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { fireOnUserAction } from "@/lib/confetti";
 
 interface ChatComposerProps {
   value: string;
@@ -32,12 +33,18 @@ export function ChatComposer({
 }: ChatComposerProps) {
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (!isDisabled && value.trim().length > 0 && !isLoading) {
+      fireOnUserAction();
+    }
     onSubmit();
   }
 
   function handleKeyDown(event: KeyboardEvent<HTMLTextAreaElement>) {
     if (event.key === "Enter" && !event.shiftKey) {
       event.preventDefault();
+      if (!isDisabled && value.trim().length > 0 && !isLoading) {
+        fireOnUserAction();
+      }
       onSubmit();
     }
   }
