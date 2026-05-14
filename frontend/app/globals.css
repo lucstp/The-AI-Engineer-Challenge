@@ -36,6 +36,51 @@
   --color-signal-success: #34d399;
   --color-signal-error: #fb7185;
   --color-signal-warn: #fbbf24;
+
+  /* Crowd silhouette animations — registered as v4 animation utilities so
+     `animate-crowd-*` are first-class Tailwind classes. The two PNGs
+     cross-fade on a 12s loop while the inner stack subtly bobs. */
+  --animate-crowd-bob: crowd-bob 12s ease-in-out infinite;
+  --animate-crowd-fade-a: crowd-fade-a 12s ease-in-out infinite;
+  --animate-crowd-fade-b: crowd-fade-b 12s ease-in-out infinite;
+
+  @keyframes crowd-bob {
+    0%,
+    100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-10px);
+    }
+  }
+
+  @keyframes crowd-fade-a {
+    0%,
+    42% {
+      opacity: 1;
+    }
+    50%,
+    92% {
+      opacity: 0;
+    }
+    100% {
+      opacity: 1;
+    }
+  }
+
+  @keyframes crowd-fade-b {
+    0%,
+    42% {
+      opacity: 0;
+    }
+    50%,
+    92% {
+      opacity: 1;
+    }
+    100% {
+      opacity: 0;
+    }
+  }
 }
 
 :root {

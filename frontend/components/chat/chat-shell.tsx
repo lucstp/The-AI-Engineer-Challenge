@@ -5,6 +5,7 @@ import { useEffect, useRef } from "react";
 import { ChatPanel } from "@/components/chat/chat-panel";
 import { ConnectionStatusCard } from "@/components/chat/connection-status-card";
 import { LockedKeyCard } from "@/components/chat/locked-key-card";
+import { CrowdSilhouette } from "@/components/decoration/crowd-silhouette";
 import { Card } from "@/components/ui/card";
 import { MovingBorder } from "@/components/ui/moving-border";
 import { completeAssistantAnimation } from "@/lib/chat-state";
@@ -115,7 +116,9 @@ export function ChatShell({ initialIsApiKeyVerified }: ChatShellProps) {
   });
 
   return (
-    <section className="relative flex min-h-0 w-full justify-center">
+    <>
+      <CrowdSilhouette isVisible={key.isApiKeyVerified} />
+      <section className="relative flex min-h-0 w-full justify-center">
       <div
         className={cn(
           "chat-shell-frame w-full",
@@ -222,6 +225,7 @@ export function ChatShell({ initialIsApiKeyVerified }: ChatShellProps) {
         </MovingBorder>
       </div>
     </section>
+    </>
   );
 }
 
