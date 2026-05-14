@@ -13,6 +13,7 @@ import { useChatScroll } from "@/lib/hooks/use-chat-scroll";
 import { useChatStreaming } from "@/lib/hooks/use-chat-streaming";
 import { useKeyLifecycle } from "@/lib/hooks/use-key-lifecycle";
 import { useShellBurstFlash } from "@/lib/hooks/use-shell-burst-flash";
+import { useSoundExperience } from "@/lib/hooks/use-sound-experience";
 import { useWelcomeInjection } from "@/lib/hooks/use-welcome-injection";
 import { cn } from "@/lib/utils";
 
@@ -30,14 +31,19 @@ interface ChatShellProps {
  *  useKeyLifecycle     → verify + disconnect + locked-state flags
  *  useShellBurstFlash  → 900ms glow flash on lock-state flip
  *  useWelcomeInjection → animated welcome on first validation
- *
- * The audio layer (crowd ambience + music after the welcome) wires in
- * here in PR 14 once the orchestrator + Vercel Blob route are in place.
+ *  useSoundExperience  → crowd (gesture) + music (after welcome) + toggle
  */
 export function ChatShell({ initialIsApiKeyVerified }: ChatShellProps) {
   // Ref bridge so useKeyLifecycle.disconnect can call into useChatStreaming
   // without a cyclic hook dependency. Wired below after both hooks construct.
   const disconnectCleanupRef = useRef<(() => void) | null>(null);
+
+  // Tracks whether music has been triggered for the current verified
+  // session. Reset on disconnect. Prevents re-firing when the messages
+  // array updates for unrelated reasons (e.g. user sends a chat message).
+  const musicStartedRef = useRef(false);
+
+  const sound = useSoundExperience();
 
   const persistence = useChatPersistence();
 
@@ -64,6 +70,12 @@ export function ChatShell({ initialIsApiKeyVerified }: ChatShellProps) {
     streaming.setIsLoading(false);
     streaming.setErrorMessage(null);
     streaming.setRequestStopped(false);
+    // Reset music latch so a future re-verify re-arms the music trigger.
+    musicStartedRef.current = false;
+    // Staggered fade-out: music first, then ~1.5s later the crowd
+    // (handled internally by sound.stopAll). Fire-and-forget — disconnect
+    // does not block on the audio fade.
+    void sound.stopAll();
   };
 
   useChatScroll({
@@ -124,6 +136,8 @@ export function ChatShell({ initialIsApiKeyVerified }: ChatShellProps) {
               }
               onDisconnect={key.isApiKeyVerified ? key.disconnectVerifiedKey : undefined}
               isDisconnecting={key.isDisconnecting}
+              isSoundEnabled={sound.isEnabled}
+              onToggleSound={sound.toggleEnabled}
             />
 
             {isChatLocked ? (
@@ -132,6 +146,12 @@ export function ChatShell({ initialIsApiKeyVerified }: ChatShellProps) {
                   apiKeyInput={key.apiKeyInput}
                   onApiKeyInputChange={key.handleApiKeyInputChange}
                   onSubmit={key.verifyApiKey}
+                  // User-gesture audio unlock — fires synchronously inside
+                  // the form's submit handler so the browser accepts the
+                  // subsequent crowd.play().
+                  onBeforeSubmit={() => {
+                    void sound.startCrowd();
+                  }}
                   isVerifyingKey={key.isVerifyingKey}
                   isApiKeyVerified={key.isApiKeyVerified}
                   keyFeedback={key.keyFeedback}
@@ -151,7 +171,25 @@ export function ChatShell({ initialIsApiKeyVerified }: ChatShellProps) {
                 endOfMessagesRef={persistence.endOfMessagesRef}
                 onConversationScroll={persistence.handleConversationScroll}
                 onAnimationDone={(messageId) => {
-                  persistence.setMessages((prev) => completeAssistantAnimation(prev, messageId));
+                  persistence.setMessages((prev) => {
+                    const completed = completeAssistantAnimation(prev, messageId);
+                    // First completed assistant message in the current
+                    // verified session === the welcome typewriter. Kick
+                    // off the music layer (idempotent on subsequent
+                    // assistant turns thanks to the ref latch).
+                    if (!musicStartedRef.current) {
+                      const animatedMessage = prev.find((m) => m.id === messageId);
+                      if (
+                        animatedMessage &&
+                        animatedMessage.role === "assistant" &&
+                        prev.every((m) => m.role !== "user")
+                      ) {
+                        musicStartedRef.current = true;
+                        void sound.startMusic();
+                      }
+                    }
+                    return completed;
+                  });
                 }}
                 onDismissError={() => streaming.setErrorMessage(null)}
                 onChooseExamplePrompt={(prompt) => {

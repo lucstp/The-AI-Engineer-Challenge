@@ -1,5 +1,6 @@
 "use client";
 
+import { Volume2 } from "lucide-react";
 import type { FormEvent } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -13,6 +14,12 @@ interface LockedKeyCardProps {
   apiKeyInput: string;
   onApiKeyInputChange: (value: string) => void;
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
+  /**
+   * Side-effect fired in the same user-gesture frame as the submit, BEFORE
+   * the verify network call. Used to unlock the browser audio context so
+   * the crowd ambience can begin playing.
+   */
+  onBeforeSubmit?: () => void;
   isVerifyingKey: boolean;
   isApiKeyVerified: boolean;
   keyFeedback: string | null;
@@ -25,20 +32,27 @@ interface LockedKeyCardProps {
  * verified. Lives inside the chat shell and centers itself vertically within
  * the available space. The shell wrapper transitions height between this
  * compact state and the full-chat state on a soft spring curve.
- *
- * PR 14 adds an `onBeforeSubmit` audio-gesture hook + a "Turn on sound" pill
- * above the form. Keep the prop surface stable so that extension is additive.
  */
 export function LockedKeyCard({
   apiKeyInput,
   onApiKeyInputChange,
   onSubmit,
+  onBeforeSubmit,
   isVerifyingKey,
   isApiKeyVerified,
   keyFeedback,
   keyFeedbackTone,
   isSwappingPanel,
 }: LockedKeyCardProps) {
+  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    // Fire the audio kick-off synchronously inside the user-gesture frame
+    // BEFORE forwarding to the verify handler — browsers require play()
+    // to be called from a gesture, and any async work in onSubmit would
+    // break that contract.
+    onBeforeSubmit?.();
+    onSubmit(event);
+  }
+
   return (
     <section
       aria-label="OpenAI key verification"
@@ -53,8 +67,16 @@ export function LockedKeyCard({
       <p className="m-0 max-w-[44ch] text-sm text-white/90 leading-relaxed [text-shadow:0_1px_2px_rgba(0,0,0,0.4)] sm:text-base">
         Enter your OpenAI key to begin.
       </p>
+      {/* "Turn on sound" pill — cyan glow + bordered pill so it scans
+          immediately, while the aurora-pill / rounded-full vocabulary keeps
+          it in the existing chrome family. Lives ABOVE the form so the
+          user sees it before clicking Verify. */}
+      <p className="mt-2 mb-2 inline-flex items-center gap-2 rounded-full border border-cyan-300/35 bg-cyan-300/8 px-4 py-1.5 font-medium text-cyan-100 text-sm shadow-[0_0_20px_rgba(125,249,255,0.18)] [text-shadow:0_1px_2px_rgba(0,0,0,0.45)] sm:mt-3 sm:mb-3 sm:gap-2.5 sm:px-5 sm:py-2 sm:text-base">
+        <Volume2 aria-hidden className="h-4 w-4 shrink-0 sm:h-[18px] sm:w-[18px]" />
+        <span className="italic">Turn on your device sound for the full experience.</span>
+      </p>
       <form
-        onSubmit={onSubmit}
+        onSubmit={handleSubmit}
         className="grid w-full max-w-[560px] grid-cols-1 gap-2.5 sm:grid-cols-[1fr_auto] sm:gap-3"
       >
         <Label htmlFor="openai-key" className="sr-only">

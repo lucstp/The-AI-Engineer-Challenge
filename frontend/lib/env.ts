@@ -12,8 +12,6 @@ import { z } from "zod";
  *   serverEnv.OPENAI_MODEL    // string, validated
  *   serverEnv.SESSION_SECRET  // string, length + entropy enforced
  *
- * Future PRs extend this schema as new env vars arrive:
- *   • PR 14 → BLOB_AUDIO_AEROPHONIA_URL (Vercel Blob audio source)
  */
 
 const SESSION_SECRET_MIN_CHARS_NON_PROD = 32;
@@ -57,6 +55,13 @@ const serverEnvSchema = z.object({
   // the per-instance in-memory fallback with a loud production warning.
   KV_REST_API_URL: z.string().url().optional(),
   KV_REST_API_TOKEN: z.string().min(1).optional(),
+  // Optional. Public URL of the Pond5 "Aerophonia" full track on Vercel
+  // Blob (https://[storeId].public.blob.vercel-storage.com/<file>). When
+  // set, /api/audio/aerophonia proxy-streams from the CDN. Absent, the
+  // route falls back to private/audio/aerophonia-full.mp3 (dev only).
+  // The route allow-lists the host suffix `.public.blob.vercel-storage.com`
+  // so a tampered env var cannot redirect the fetch elsewhere.
+  BLOB_AUDIO_AEROPHONIA_URL: z.string().url().optional(),
 });
 
 function parseEnv<T extends z.ZodTypeAny>(
@@ -81,6 +86,7 @@ export const serverEnv = parseEnv(serverEnvSchema, {
   SESSION_SECRET: process.env.SESSION_SECRET,
   KV_REST_API_URL: process.env.KV_REST_API_URL,
   KV_REST_API_TOKEN: process.env.KV_REST_API_TOKEN,
+  BLOB_AUDIO_AEROPHONIA_URL: process.env.BLOB_AUDIO_AEROPHONIA_URL,
 });
 
 // Environment-aware SESSION_SECRET strength gate. Runs at module load —
