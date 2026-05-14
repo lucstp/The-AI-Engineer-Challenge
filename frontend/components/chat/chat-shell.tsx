@@ -116,7 +116,7 @@ export function ChatShell({ initialIsApiKeyVerified }: ChatShellProps) {
       >
         <MovingBorder
           borderRadius="1.5rem"
-          durationMs={11000}
+          durationMs={16000}
           borderWidthPx={2.5}
           containerClassName="h-full w-full"
         >
@@ -124,6 +124,12 @@ export function ChatShell({ initialIsApiKeyVerified }: ChatShellProps) {
             aria-label="AI chat interface"
             className={cn(
               "relative flex h-full w-full flex-col overflow-hidden text-white",
+              // Backdrop frost as Tailwind v4 utilities (NOT raw `backdrop-
+              // filter` in globals.css — that was conflicting with Tailwind's
+              // filter architecture and silently breaking the blur). The Card
+              // primitive auto-adds `chat-shell-glass` for the rest of the
+              // glass styling.
+              "backdrop-blur-[20px]",
               "gap-3 p-3 sm:gap-4 sm:p-4 md:p-6",
               !isChatLocked && "min-h-[520px]"
             )}

@@ -599,32 +599,64 @@ textarea {
    put the conversation in the darkest zone on the page so the bright
    surrounding palette becomes the frame and text contrast is maximal. */
 .chat-shell-glass {
+  /* `isolation: isolate` creates a clean stacking context WITHOUT breaking
+     backdrop-filter the way `opacity:<1` would. Apple uses this pattern on
+     macOS Sonoma panels and iOS notifications. The pseudo-elements (::before
+     top sheen + ::after aurora) layer cleanly above the frost. */
+  position: relative;
+  isolation: isolate;
   border-radius: 1.5rem;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(9, 20, 50, 0.72);
-  backdrop-filter: blur(28px) saturate(180%);
-  -webkit-backdrop-filter: blur(28px) saturate(180%);
-  /* Lean shadow stack — drop only. Big static glow halos were swallowing
-     the MovingBorder's 1px animated trail running around the perimeter. */
+
+  /* Translucent diagonal tint — dialed DOWN from 0.10/0.04 to 0.06/0.02 so
+     the frost effect dominates the surface (the rainbow body shows through
+     more clearly without a milky white wash). */
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0.02) 100%);
+
+  /* Backdrop blur is applied via Tailwind utility on the Card JSX element
+     (`backdrop-blur-[20px]`). Defining `backdrop-filter` as raw CSS here
+     conflicts with Tailwind v4's filter architecture and was silently
+     breaking the blur. Saturate is intentionally NOT applied — pushing
+     it to 180% punched the aurora colors so hard the glass read as
+     aggressive blue instead of calm tinted glass. */
+
+  /* Thicker, more visible glass edge — 2.5px alpha 0.28 reads as a real
+     physical rim, matches the GitHub Copilot reference you shared. */
+  border: 2.5px solid rgba(255, 255, 255, 0.28);
+
+  /* Glow stack — tuned so the AURORA palette leads, white is a tight edge
+     accent (not a wash). Reads like a card lit from within by the rainbow
+     body behind it, rather than a card bleached with a flashlight.
+     Inset stack still provides the Apple Liquid Glass top bevel + double
+     edge stroke for the physical-rim feel. */
   box-shadow:
-    0 22px 56px rgba(2, 8, 28, 0.42),
-    0 6px 18px rgba(2, 8, 28, 0.24),
-    inset 0 1px 0 rgba(255, 255, 255, 0.18);
+    inset 0 1px 0 rgba(255, 255, 255, 0.35),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.08),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.04),
+    0 30px 60px -20px rgba(2, 8, 28, 0.5),
+    0 8px 24px -8px rgba(2, 8, 28, 0.3),
+    /* Tight white halo — the "lit edge" only, ~20px from the border */
+    0 0 22px rgba(255, 255, 255, 0.18),
+    /* Aurora glow — cyan inner ring → violet mid → fuchsia outermost.
+       These now carry the visible spread the user perceives, not white. */
+    0
+    0 60px rgba(125, 249, 255, 0.34),
+    0 0 110px rgba(167, 139, 250, 0.3),
+    0 0 180px rgba(244, 114, 182, 0.2);
 }
 
 /* Subtle top-down sheen, gives the glass its "lit edge" highlight. */
 .chat-shell-glass::before {
+  /* Top-edge sheen — the "lit lens" highlight that makes a translucent panel
+     read as physical glass under a soft light source. Linear 180deg gradient
+     fading from a subtle white wash at the top to fully transparent by 30%
+     down. Sits ABOVE the backdrop-filter via the parent's stacking context. */
   content: "";
   position: absolute;
   inset: 0;
+  z-index: 0;
   border-radius: inherit;
   pointer-events: none;
-  background: radial-gradient(
-    ellipse at 50% 0%,
-    rgba(255, 255, 255, 0.14) 0%,
-    rgba(255, 255, 255, 0.05) 35%,
-    rgba(255, 255, 255, 0) 72%
-  );
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0) 30%);
 }
 
 /* Inner ambient aurora — cyan/magenta/violet blobs that visibly drift inside
@@ -632,16 +664,21 @@ textarea {
    (mix-blend-mode was washing the colors out against the white glass) and
    a faster cycle so the motion actually registers. */
 .chat-shell-glass::after {
+  /* Ambient aurora — cyan/magenta/violet blobs that drift inside the shell
+     for that "alive surface" feel. Alpha values are intentionally LOWER
+     than the previous design (0.18 / 0.14 / 0.14 vs 0.34 / 0.30 / 0.26)
+     so the underlying frost reads clearly — the colors are a hint, not a
+     wash. No backdrop-filter here: that's the parent's job. */
   content: "";
   position: absolute;
   inset: 0;
+  z-index: 0;
   border-radius: inherit;
   pointer-events: none;
-  z-index: 0;
   background:
-    radial-gradient(ellipse 62% 48% at 18% 26%, rgba(125, 249, 255, 0.34), transparent 62%),
-    radial-gradient(ellipse 52% 44% at 86% 70%, rgba(244, 114, 182, 0.3), transparent 62%),
-    radial-gradient(ellipse 58% 42% at 50% 108%, rgba(167, 139, 250, 0.26), transparent 62%);
+    radial-gradient(ellipse 62% 48% at 18% 26%, rgba(125, 249, 255, 0.18), transparent 62%),
+    radial-gradient(ellipse 52% 44% at 86% 70%, rgba(244, 114, 182, 0.14), transparent 62%),
+    radial-gradient(ellipse 58% 42% at 50% 108%, rgba(167, 139, 250, 0.14), transparent 62%);
   animation: shell-aurora-drift 16s ease-in-out infinite alternate;
 }
 
@@ -838,7 +875,17 @@ textarea {
   isolation: isolate;
   display: flex;
   flex-direction: row;
-  align-items: center;
+  /* flex-end: buttons baseline-align with the LAST line of the textarea.
+     Paired with `field-sizing: content` on the textarea (no dead space
+     below text), 1-line and 2-line cases both read clean — buttons sit
+     beside the active typing line, not floating mid-air over wrapped
+     text. The shell's min-height: 64px below keeps the single-line
+     resting state comfortable. */
+  align-items: flex-end;
+  /* Floor for the shell itself — keeps the composer comfortable when the
+     textarea is short. Previously this was inside the textarea, which
+     parked text at the top. */
+  min-height: 64px;
   gap: 0.55rem;
   padding: 0.42rem 0.55rem;
   border-radius: 1.1rem;
