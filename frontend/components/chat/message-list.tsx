@@ -128,6 +128,9 @@ interface MessageListProps {
   onConversationScroll: (scrollTop: number) => void;
   onAnimationDone: (messageId: string) => void;
   onDismissError: () => void;
+  /** Re-send the last user message after an error. When provided, a Retry
+   * button renders alongside Dismiss so the user can recover in one click. */
+  onRetryLastMessage?: () => void;
   onChooseExamplePrompt: (prompt: string) => void;
   endOfMessagesRef: RefObject<HTMLDivElement | null>;
 }
@@ -148,6 +151,7 @@ export function MessageList({
   onConversationScroll,
   onAnimationDone,
   onDismissError,
+  onRetryLastMessage,
   onChooseExamplePrompt,
   endOfMessagesRef,
 }: MessageListProps) {
@@ -311,15 +315,24 @@ export function MessageList({
           className="flex flex-col items-start justify-between gap-2 rounded-xl border border-rose-200/45 bg-rose-950/50 px-3 py-2 text-rose-50 text-sm shadow-[inset_0_1px_0_rgba(255,255,255,0.12)] backdrop-blur-md sm:flex-row sm:items-center sm:gap-3"
         >
           <span>{errorMessage}</span>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={onDismissError}
-            className="self-end sm:self-auto"
-          >
-            Dismiss
-          </Button>
+          <div className="flex gap-2 self-end sm:self-auto">
+            {onRetryLastMessage ? (
+              <Button
+                type="button"
+                variant="default"
+                size="sm"
+                onClick={() => {
+                  onDismissError();
+                  onRetryLastMessage();
+                }}
+              >
+                Retry
+              </Button>
+            ) : null}
+            <Button type="button" variant="outline" size="sm" onClick={onDismissError}>
+              Dismiss
+            </Button>
+          </div>
         </div>
       ) : null}
 

@@ -192,6 +192,7 @@ export function ChatShell({ initialIsApiKeyVerified }: ChatShellProps) {
                   });
                 }}
                 onDismissError={() => streaming.setErrorMessage(null)}
+                onRetryLastMessage={() => void streaming.retryLastMessage()}
                 onChooseExamplePrompt={(prompt) => {
                   void streaming.submitMessage(prompt);
                 }}

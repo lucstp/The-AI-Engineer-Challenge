@@ -14,6 +14,10 @@ export interface ChatStreaming {
   activeRequestRef: React.RefObject<AbortController | null>;
   submitMessage: (messageText: string) => Promise<void>;
   stopCurrentRequest: () => void;
+  /** Retry the last user message after an error. Does NOT add a second user
+   * turn — the original user message is already in the array from the
+   * original failed submission. */
+  retryLastMessage: () => Promise<void>;
 }
 
 interface UseChatStreamingArgs {
@@ -36,6 +40,9 @@ export function useChatStreaming({
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [requestStopped, setRequestStopped] = useState(false);
   const activeRequestRef = useRef<AbortController | null>(null);
+  // Last user message text — captured on every submit so Retry can re-send
+  // it without requiring the user to retype after a transient OpenAI error.
+  const lastUserMessageRef = useRef<string | null>(null);
 
   useEffect(() => {
     return () => {
@@ -43,8 +50,8 @@ export function useChatStreaming({
     };
   }, []);
 
-  const submitMessage = useCallback(
-    async (messageText: string) => {
+  const runRequest = useCallback(
+    async (messageText: string, isRetry: boolean) => {
       const trimmed = messageText.trim();
       if (!trimmed || isLoading || isChatLocked) {
         return;
@@ -54,13 +61,23 @@ export function useChatStreaming({
       const controller = new AbortController();
       activeRequestRef.current = controller;
 
-      const userMessage = createUserMessage(trimmed);
       const assistantMessage = createAssistantMessage("", { animate: false });
       const assistantMessageId = assistantMessage.id;
       let receivedChunk = false;
 
-      setMessages((prev) => [...prev, userMessage, assistantMessage]);
-      setInputValue("");
+      if (isRetry) {
+        // Retry path: the user's original message is already in the messages
+        // array from the prior failed submission — only add a fresh assistant
+        // placeholder. Don't clear inputValue (user may have typed something
+        // new in the box and we don't want to nuke it).
+        setMessages((prev) => [...prev, assistantMessage]);
+      } else {
+        const userMessage = createUserMessage(trimmed);
+        setMessages((prev) => [...prev, userMessage, assistantMessage]);
+        setInputValue("");
+        lastUserMessageRef.current = trimmed;
+      }
+
       setIsLoading(true);
       setErrorMessage(null);
       setRequestStopped(false);
@@ -103,6 +120,18 @@ export function useChatStreaming({
     [isLoading, isChatLocked, setMessages, setInputValue]
   );
 
+  const submitMessage = useCallback(
+    (messageText: string) => runRequest(messageText, false),
+    [runRequest]
+  );
+
+  const retryLastMessage = useCallback(async () => {
+    const last = lastUserMessageRef.current;
+    if (last !== null) {
+      await runRequest(last, true);
+    }
+  }, [runRequest]);
+
   const stopCurrentRequest = useCallback(() => {
     if (!activeRequestRef.current) {
       return;
@@ -123,5 +152,6 @@ export function useChatStreaming({
     activeRequestRef,
     submitMessage,
     stopCurrentRequest,
+    retryLastMessage,
   };
 }
