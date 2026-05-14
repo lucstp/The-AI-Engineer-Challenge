@@ -8,6 +8,7 @@ import {
   openAiErrorResponseSchema,
   openAiStreamChunkSchema,
 } from "@/lib/schemas";
+import { unseal } from "@/lib/session-crypto";
 
 export const runtime = "nodejs";
 
@@ -34,8 +35,39 @@ const COLDPLAY_SYSTEM_PROMPT = [
   "- Do not use headings (#) inline — keep responses flowing prose + lists.",
 ].join("");
 
+/**
+ * Same-origin guard (CSRF defense-in-depth). Server Actions get free CSRF
+ * protection from Next.js; route handlers do not. Reject any POST whose
+ * Origin header doesn't match the request URL host. Cookies might travel
+ * cross-site even with sameSite=strict on browsers that don't honor it
+ * correctly; this is belt + suspenders.
+ *
+ * Missing Origin (server-to-server probe / curl without --header Origin)
+ * also fails closed — legitimate browsers always include Origin on POST.
+ */
+function isSameOrigin(request: Request): boolean {
+  const origin = request.headers.get("origin");
+  if (!origin) {
+    return false;
+  }
+  try {
+    return new URL(origin).host === new URL(request.url).host;
+  } catch {
+    return false;
+  }
+}
+
 export async function POST(request: Request): Promise<Response> {
   const requestId = crypto.randomUUID();
+
+  // Cheapest guard first — drops obvious cross-site abuse before we
+  // touch JSON parsing, cookie storage, or the upstream OpenAI fetch.
+  if (!isSameOrigin(request)) {
+    return NextResponse.json(
+      { detail: "Cross-origin requests are not permitted." },
+      { status: 403, headers: { "x-request-id": requestId } }
+    );
+  }
 
   let body: unknown;
   try {
@@ -55,12 +87,13 @@ export async function POST(request: Request): Promise<Response> {
     );
   }
 
-  // Raw key cookie — PR 7 wraps this with AES-256-GCM unseal here, adds
-  // a same-origin guard above this read, and PR 8 layers a sliding-window
-  // rate limit before any of this work happens.
+  // Cookie is AES-256-GCM sealed. unseal() returns null on any tamper or
+  // wrong-key failure — fail closed, never trust a partial decrypt.
+  // PR 8 layers a sliding-window rate limit before this work happens.
   const cookieStore = await cookies();
-  const keyCookie = cookieStore.get(OPENAI_API_KEY_COOKIE)?.value;
-  if (!keyCookie || !isPlausibleOpenAiKey(keyCookie)) {
+  const sealed = cookieStore.get(OPENAI_API_KEY_COOKIE)?.value;
+  const apiKey = typeof sealed === "string" ? unseal(sealed) : null;
+  if (apiKey === null || !isPlausibleOpenAiKey(apiKey)) {
     return NextResponse.json(
       { detail: "OpenAI key not verified. Please re-enter your key." },
       { status: 401, headers: { "x-request-id": requestId } }
@@ -76,7 +109,7 @@ export async function POST(request: Request): Promise<Response> {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${keyCookie}`,
+        Authorization: `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
         model: OPENAI_MODEL,

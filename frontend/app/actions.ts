@@ -2,7 +2,8 @@
 
 import { cookies } from "next/headers";
 
-import { verifyKeyInputSchema } from "@/lib/schemas";
+import { isPlausibleOpenAiKey, verifyKeyInputSchema } from "@/lib/schemas";
+import { seal, unseal } from "@/lib/session-crypto";
 
 export interface VerifyKeyResult {
   ok: boolean;
@@ -11,9 +12,7 @@ export interface VerifyKeyResult {
 
 const OPENAI_API_KEY_COOKIE = "openai_api_key";
 // 24h: short enough to bound key-disclosure blast radius, long enough that
-// a normal day's session survives without re-verification. PR 7 (cookie
-// security) wraps the raw value with AES-256-GCM seal and tightens
-// sameSite to "strict".
+// a normal day's session survives without re-verification.
 const SESSION_TTL_SECONDS = 60 * 60 * 24;
 
 export async function verifyOpenAiKeyAction(rawKey: string): Promise<VerifyKeyResult> {
@@ -37,14 +36,15 @@ export async function verifyOpenAiKeyAction(rawKey: string): Promise<VerifyKeyRe
 
     if (response.ok) {
       const cookieStore = await cookies();
-      // Raw key for now — PR 7 wraps with AES-256-GCM seal so cookie
-      // disclosure (logs, browser-ext, OS-level inspection) only yields
-      // an opaque blob without SESSION_SECRET. Same-site policy also
-      // tightens to "strict" in PR 7.
-      cookieStore.set(OPENAI_API_KEY_COOKIE, key, {
+      // Seal the key with AES-256-GCM before it ever lands in the cookie
+      // jar. Cookie disclosure (logs, browser-ext, OS-level inspection)
+      // yields only an opaque blob without SESSION_SECRET.
+      cookieStore.set(OPENAI_API_KEY_COOKIE, seal(key), {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
+        // strict (not lax): cross-site navigation must NOT carry this
+        // key cookie. App is single-origin; strict has zero UX cost.
+        sameSite: "strict",
         path: "/",
         maxAge: SESSION_TTL_SECONDS,
       });
@@ -79,9 +79,23 @@ export async function verifyOpenAiKeyAction(rawKey: string): Promise<VerifyKeyRe
 }
 
 /**
+ * Server-side "is the user verified" check. Used by client components that
+ * need to re-confirm session validity (e.g. after a long idle). Unseals the
+ * cookie and verifies the plaintext key shape — fails closed on any tamper.
+ */
+export async function hasVerifiedKeyAction(): Promise<boolean> {
+  const cookieStore = await cookies();
+  const sealed = cookieStore.get(OPENAI_API_KEY_COOKIE)?.value;
+  if (typeof sealed !== "string" || sealed.length === 0) {
+    return false;
+  }
+  const decrypted = unseal(sealed);
+  return decrypted !== null && isPlausibleOpenAiKey(decrypted);
+}
+
+/**
  * Powers the Disconnect button in `ConnectionStatusCard`: clears the
- * key cookie server-side so the next request is unverified. Hardened in
- * PR 7 with sealed-cookie deletion semantics + structured logging.
+ * sealed key cookie server-side so the next request is unverified.
  */
 export async function clearVerifiedKeyAction(): Promise<void> {
   const cookieStore = await cookies();
