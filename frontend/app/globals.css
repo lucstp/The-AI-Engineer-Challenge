@@ -59,23 +59,23 @@
 @media (min-width: 1024px) {
   :root {
     --shell-h-locked: clamp(360px, 40svh, 440px);
-    --shell-h-unlocked: 66svh;
-    --shell-max-h-unlocked: 720px;
+    --shell-h-unlocked: 88svh;
+    --shell-max-h-unlocked: 960px;
   }
 }
 
 @media (min-width: 1280px) {
   :root {
     --shell-h-locked: clamp(380px, 42svh, 460px);
-    --shell-h-unlocked: 68svh;
-    --shell-max-h-unlocked: 760px;
+    --shell-h-unlocked: 90svh;
+    --shell-max-h-unlocked: 1020px;
   }
 }
 
 @media (min-width: 1536px) {
   :root {
     --shell-h-locked: clamp(400px, 44svh, 480px);
-    --shell-max-h-unlocked: 800px;
+    --shell-max-h-unlocked: 1080px;
   }
 }
 
@@ -1117,6 +1117,21 @@ textarea {
 
 .thinking-dot:nth-child(3) {
   animation-delay: 220ms;
+}
+
+/* Conditional layout — body[data-chat-locked] is set by a useEffect inside
+   ChatShell. CSS targets it via a plain descendant selector (no :has()
+   dependency, which proved unreliable in some browser/Tailwind v4 combos).
+   Locked → flex column centers vertically as a single group.
+   Unlocked → disclaimer wrapper gets margin-top: auto to pin to viewport
+   bottom; chat shell expands to fill the upper area. */
+@media (min-width: 1024px) {
+  body[data-chat-locked="false"] [data-disclaimer-wrapper] {
+    margin-top: auto;
+  }
+  body[data-chat-locked="true"] [data-layout-root] {
+    justify-content: center;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

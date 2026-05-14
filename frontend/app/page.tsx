@@ -23,17 +23,35 @@ export default async function HomePage() {
       id="main-content"
       className="relative isolate min-h-svh overflow-y-auto overflow-x-hidden px-3 py-5 sm:px-4 sm:py-6 lg:h-svh lg:min-h-0 lg:overflow-hidden lg:px-8 lg:py-8 xl:px-10 xl:py-10"
     >
-      {/* Two "Love is the only answer" handwritten epigraphs frame the chat
-          shell diagonally: upper-left + middle-right. Hidden below lg. */}
-      <LoveIsTheOnlyAnswer className="pointer-events-none absolute top-[18%] left-4 z-0 hidden w-[180px] opacity-85 lg:block xl:top-[27%] xl:left-10 xl:w-[220px] 2xl:left-72 2xl:w-[320px]" />
-      <LoveIsTheOnlyAnswer className="pointer-events-none absolute top-1/2 right-4 z-0 hidden w-[220px] -translate-y-1/2 opacity-85 lg:block xl:right-12 xl:w-[280px] 2xl:right-60 2xl:w-[320px]" />
+      {/* "Love is the only answer" handwritten epigraphs flank the chat shell
+          diagonally — upper-left + middle-right. Positioned with
+          `calc(50% + 540px)` so they ABUT the chat shell's outer edges with
+          a ~20px gap (chat shell max-width is 1040px at 2xl, half-width
+          520px, plus 20px gap = 540px from viewport center). Right side
+          mirrors using `left:` instead of `right:`. Same calc on both
+          sides keeps them symmetrically anchored to the shell — they
+          scale with viewport width without ever overlapping or drifting
+          to the screen corners. Shown at 2xl+ (>=1536px); below that the
+          shell consumes too much horizontal real estate to fit them. */}
+      <LoveIsTheOnlyAnswer className="pointer-events-none absolute top-[18%] z-0 hidden w-[220px] opacity-90 2xl:block 2xl:right-[calc(50%_+_540px)] min-[1800px]:top-[22%] min-[1800px]:w-[260px]" />
+      <LoveIsTheOnlyAnswer className="pointer-events-none absolute top-1/2 z-0 hidden w-[220px] -translate-y-1/2 opacity-90 2xl:block 2xl:left-[calc(50%_+_540px)] min-[1800px]:w-[260px]" />
 
       <AuroraBackground />
 
-      <div className="mx-auto flex w-full max-w-[1320px] flex-col gap-4 lg:h-full lg:justify-center">
+      {/* Layout root — CSS in globals.css reads `body[data-chat-locked]`
+          (set by useEffect in ChatShell) and switches flex behavior:
+          locked → justify-content: center (whole content block centers
+          vertically); unlocked → disclaimer wrapper gets mt-auto so the
+          chat shell expands at top and the footer pins to bottom. */}
+      <div
+        data-layout-root
+        className="mx-auto flex w-full max-w-[1320px] flex-col gap-4 lg:h-full"
+      >
         <Hero />
         <ChatShell initialIsApiKeyVerified={initialIsApiKeyVerified} />
-        <DisclaimerFooter />
+        <div data-disclaimer-wrapper>
+          <DisclaimerFooter />
+        </div>
       </div>
     </main>
   );

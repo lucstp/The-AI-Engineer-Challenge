@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 
 import { ChatPanel } from "@/components/chat/chat-panel";
 import { ConnectionStatusCard } from "@/components/chat/connection-status-card";
@@ -56,6 +56,16 @@ export function ChatShell({ initialIsApiKeyVerified }: ChatShellProps) {
   });
 
   const isChatLocked = !key.isApiKeyVerified;
+
+  // Sync chat-locked state to `document.body` so CSS in globals.css can flip
+  // the page layout (centered when locked, top-anchored when unlocked) via a
+  // plain attribute selector — more reliable across browsers than `:has()`.
+  useEffect(() => {
+    document.body.dataset.chatLocked = isChatLocked ? "true" : "false";
+    return () => {
+      delete document.body.dataset.chatLocked;
+    };
+  }, [isChatLocked]);
 
   const streaming = useChatStreaming({
     isChatLocked,
