@@ -207,9 +207,14 @@ export async function POST(request: Request): Promise<Response> {
   // Pipe OpenAI SSE → plain text content deltas. We strip the SSE
   // envelope on the server so the client (streamChatMessage) stays simple:
   // it just decodes UTF-8 chunks and appends them to the rendered message.
+  //
+  // Capture `upstream.body` in a local first — the !=null narrowing above
+  // doesn't survive the ReadableStream-constructor closure boundary, and a
+  // non-null assertion (upstream.body!) trips biome's noNonNullAssertion.
+  const upstreamBody = upstream.body;
   const stream = new ReadableStream<Uint8Array>({
     async start(controller) {
-      const reader = upstream.body!.getReader();
+      const reader = upstreamBody.getReader();
       const decoder = new TextDecoder();
       const encoder = new TextEncoder();
       let buffer = "";
