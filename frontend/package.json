@@ -12,7 +12,10 @@
     "format": "biome format",
     "format:fix": "biome format --write",
     "typecheck": "tsc --noEmit",
-    "audit": "pnpm audit --prod --audit-level=high"
+    "audit": "pnpm audit --prod --audit-level=high",
+    "test": "vitest",
+    "test:run": "vitest run",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "@radix-ui/react-label": "^2.1.8",
@@ -35,10 +38,12 @@
   },
   "devDependencies": {
     "@biomejs/biome": "2.4.15",
+    "@playwright/test": "^1.59.1",
     "@types/node": "latest",
     "@types/react": "latest",
     "@types/react-dom": "latest",
     "typescript": "latest",
-    "vercel": "latest"
+    "vercel": "latest",
+    "vitest": "^4.1.6"
   }
 }

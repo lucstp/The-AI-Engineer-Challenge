@@ -55,6 +55,10 @@ const nextConfig: NextConfig = {
   // Don't ship the default `X-Powered-By: Next.js` header — small recon
   // win for an attacker, zero functional value.
   poweredByHeader: false,
+  // Honor NEXT_DIST_DIR so the Playwright test runner can build into
+  // `.next-test/` (isolated from a developer's `pnpm dev` writing to
+  // `.next/` on port 3000). Set by `tests/global-setup.ts`.
+  distDir: process.env.NEXT_DIST_DIR ?? ".next",
   async headers() {
     return [
       {
