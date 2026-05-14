@@ -66,10 +66,7 @@ export default async function HomePage() {
           locked → justify-content: center (whole content block centers
           vertically); unlocked → disclaimer wrapper gets mt-auto so the
           chat shell expands at top and the footer pins to bottom. */}
-      <div
-        data-layout-root
-        className="mx-auto flex w-full max-w-[1320px] flex-col gap-4 lg:h-full"
-      >
+      <div data-layout-root className="mx-auto flex w-full max-w-[1320px] flex-col gap-4 lg:h-full">
         <Hero />
         <ChatShell initialIsApiKeyVerified={initialIsApiKeyVerified} />
         <div data-disclaimer-wrapper>
