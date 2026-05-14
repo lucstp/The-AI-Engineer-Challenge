@@ -13,7 +13,6 @@ import { z } from "zod";
  *   serverEnv.SESSION_SECRET  // string, length + entropy enforced
  *
  * Future PRs extend this schema as new env vars arrive:
- *   • PR 8  → KV_REST_API_URL + KV_REST_API_TOKEN (Upstash rate limit)
  *   • PR 14 → BLOB_AUDIO_AEROPHONIA_URL (Vercel Blob audio source)
  */
 
@@ -52,6 +51,12 @@ const serverEnvSchema = z.object({
   // The length-by-environment + entropy check are enforced post-parse so
   // they can read NODE_ENV (which is itself parsed by this same schema).
   SESSION_SECRET: z.string(),
+  // Optional. When both are present, /api/chat rate-limits via Upstash
+  // sliding window. Vercel's Upstash Marketplace integration sets these
+  // canonical names when no custom prefix is configured. Absence triggers
+  // the per-instance in-memory fallback with a loud production warning.
+  KV_REST_API_URL: z.string().url().optional(),
+  KV_REST_API_TOKEN: z.string().min(1).optional(),
 });
 
 function parseEnv<T extends z.ZodTypeAny>(
@@ -74,6 +79,8 @@ export const serverEnv = parseEnv(serverEnvSchema, {
   OPENAI_MAX_COMPLETION_TOKENS: process.env.OPENAI_MAX_COMPLETION_TOKENS,
   NODE_ENV: process.env.NODE_ENV,
   SESSION_SECRET: process.env.SESSION_SECRET,
+  KV_REST_API_URL: process.env.KV_REST_API_URL,
+  KV_REST_API_TOKEN: process.env.KV_REST_API_TOKEN,
 });
 
 // Environment-aware SESSION_SECRET strength gate. Runs at module load —

@@ -2,6 +2,7 @@ import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 
 import { serverEnv } from "@/lib/env";
+import { checkRateLimit, getClientKey } from "@/lib/rate-limit";
 import {
   chatRequestSchema,
   isPlausibleOpenAiKey,
@@ -17,6 +18,14 @@ const OPENAI_CHAT_COMPLETIONS_ENDPOINT = "https://api.openai.com/v1/chat/complet
 const OPENAI_TIMEOUT_MS = 60_000;
 const OPENAI_MODEL = serverEnv.OPENAI_MODEL;
 const OPENAI_MAX_TOKENS = serverEnv.OPENAI_MAX_COMPLETION_TOKENS;
+// 8KB body cap. chatRequestSchema caps `message` at 4000 chars; a well-formed
+// payload is well under this. A larger Content-Length is by definition either
+// junk wrapping or an attempt to exhaust the JSON parser before validation.
+const MAX_REQUEST_BODY_BYTES = 8 * 1024;
+// 64KB upstream SSE buffer cap. A misbehaving upstream that never emits a
+// newline could accumulate unbounded memory in the chunk buffer; this cap
+// tears the stream down before that happens.
+const MAX_SSE_BUFFER_BYTES = 64 * 1024;
 
 const COLDPLAY_SYSTEM_PROMPT = [
   "You are a Coldplay-only assistant. Answer only questions about Coldplay, ",
@@ -67,6 +76,39 @@ export async function POST(request: Request): Promise<Response> {
       { detail: "Cross-origin requests are not permitted." },
       { status: 403, headers: { "x-request-id": requestId } }
     );
+  }
+
+  // Per-IP sliding-window rate limit runs before any auth/parse work —
+  // each chat request becomes a paid OpenAI call downstream, so the
+  // cheapest place to shed abusive floods is here.
+  const rateLimit = await checkRateLimit(getClientKey(request));
+  if (!rateLimit.allowed) {
+    return NextResponse.json(
+      {
+        detail: `Too many requests. Please wait ${rateLimit.retryAfterSec}s and try again.`,
+      },
+      {
+        status: 429,
+        headers: {
+          "x-request-id": requestId,
+          "Retry-After": String(rateLimit.retryAfterSec),
+          "X-RateLimit-Remaining": String(rateLimit.remaining),
+          "X-RateLimit-Reset": String(rateLimit.resetAt),
+        },
+      }
+    );
+  }
+
+  // Content-Length pre-check: cheap reject before we buffer the body.
+  const contentLengthHeader = request.headers.get("content-length");
+  if (contentLengthHeader !== null) {
+    const declared = Number(contentLengthHeader);
+    if (Number.isFinite(declared) && declared > MAX_REQUEST_BODY_BYTES) {
+      return NextResponse.json(
+        { detail: "Request body too large." },
+        { status: 413, headers: { "x-request-id": requestId } }
+      );
+    }
   }
 
   let body: unknown;
@@ -183,6 +225,12 @@ export async function POST(request: Request): Promise<Response> {
           }
 
           buffer += decoder.decode(value, { stream: true });
+          if (buffer.length > MAX_SSE_BUFFER_BYTES) {
+            // Defense against an upstream that streams without newlines —
+            // unbounded buffer growth would leak memory. Tear it down.
+            controller.error(new Error("Upstream SSE buffer exceeded cap"));
+            return;
+          }
           const lines = buffer.split("\n");
           buffer = lines.pop() ?? "";
 
