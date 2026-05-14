@@ -44,11 +44,27 @@ export function useWelcomeInjection({
     if (isRestoringChatState) return;
     if (hasInjectedRef.current) return;
 
+    // Critical: set the latch SYNCHRONOUSLY here, BEFORE setMessages.
+    // setMessages's updater is queued, not synchronous — if we set the
+    // ref inside the updater, React 18 StrictMode's second effect run
+    // still sees hasInjectedRef.current === false and queues a SECOND
+    // updater, double-injecting the welcome.
+    hasInjectedRef.current = true;
+
+    // Critical: construct the welcome message OUTSIDE the updater. Updaters
+    // must be pure — StrictMode invokes them twice for purity checks, and
+    // createAssistantMessage() generates a fresh UUID per call. Hoisting
+    // the construction guarantees the same object reference (same id)
+    // across both invocations, so the message list doesn't re-key and
+    // remount the typewriter.
+    const welcomeMessage = createAssistantMessage(WELCOME_MESSAGE, {
+      typingMs: WELCOME_TYPING_MS,
+    });
+
     setMessages((prev) => {
-      hasInjectedRef.current = true;
       const hasUserMessage = prev.some((message) => message.role === "user");
       if (hasUserMessage) return prev;
-      return [createAssistantMessage(WELCOME_MESSAGE, { typingMs: WELCOME_TYPING_MS })];
+      return [welcomeMessage];
     });
   }, [isApiKeyVerified, isRestoringChatState, setMessages]);
 }
