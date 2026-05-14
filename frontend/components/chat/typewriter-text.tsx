@@ -34,6 +34,17 @@ export function TypewriterText({
   const [visibleText, setVisibleText] = useState(shouldAnimate ? "" : text);
   const doneRef = useRef(false);
 
+  // Stable handle for the animation-complete callback. The parent passes
+  // an inline arrow each render (e.g. `() => onAnimationDone(message.id)`
+  // in MessageList) — depending on its identity in the animation effect
+  // would restart the typewriter on every unrelated parent re-render
+  // (sound fade ticks, persist effects, scroll updates). The ref keeps
+  // the effect deps stable.
+  const onAnimationDoneRef = useRef(onAnimationDone);
+  useEffect(() => {
+    onAnimationDoneRef.current = onAnimationDone;
+  }, [onAnimationDone]);
+
   const frames = useMemo(() => {
     if (!shouldAnimate) {
       return [text];
@@ -58,7 +69,7 @@ export function TypewriterText({
       setVisibleText(text);
       if (!doneRef.current) {
         doneRef.current = true;
-        onAnimationDone?.();
+        onAnimationDoneRef.current?.();
       }
       return;
     }
@@ -76,7 +87,7 @@ export function TypewriterText({
         window.clearInterval(timer);
         if (!doneRef.current) {
           doneRef.current = true;
-          onAnimationDone?.();
+          onAnimationDoneRef.current?.();
         }
       }
     }, stepMs);
@@ -84,7 +95,9 @@ export function TypewriterText({
     return () => {
       window.clearInterval(timer);
     };
-  }, [durationMs, frames, onAnimationDone, shouldAnimate, text]);
+    // onAnimationDone intentionally NOT in deps — read via ref above.
+    // Including it would restart the typewriter on every parent re-render.
+  }, [durationMs, frames, shouldAnimate, text]);
 
   return <>{visibleText}</>;
 }
