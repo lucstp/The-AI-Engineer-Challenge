@@ -1,6 +1,7 @@
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 
+import { serverEnv } from "@/lib/env";
 import {
   chatRequestSchema,
   isPlausibleOpenAiKey,
@@ -13,8 +14,8 @@ export const runtime = "nodejs";
 const OPENAI_API_KEY_COOKIE = "openai_api_key";
 const OPENAI_CHAT_COMPLETIONS_ENDPOINT = "https://api.openai.com/v1/chat/completions";
 const OPENAI_TIMEOUT_MS = 60_000;
-const OPENAI_MODEL = process.env.OPENAI_MODEL ?? "gpt-5";
-const OPENAI_MAX_TOKENS = Number(process.env.OPENAI_MAX_COMPLETION_TOKENS ?? 280);
+const OPENAI_MODEL = serverEnv.OPENAI_MODEL;
+const OPENAI_MAX_TOKENS = serverEnv.OPENAI_MAX_COMPLETION_TOKENS;
 
 const COLDPLAY_SYSTEM_PROMPT = [
   "You are a Coldplay-only assistant. Answer only questions about Coldplay, ",
