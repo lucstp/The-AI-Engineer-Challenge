@@ -1,0 +1,9 @@
+# Defense-in-depth alongside <meta name="robots" content="noindex,nofollow">
+# in app/layout.tsx. This file blocks crawlers that ignore meta directives.
+#
+# Intentional: this is a non-commercial educational student project that
+# uses Coldplay brand IP under fair use. Indexing it would risk
+# brand-confusion / IP concerns.
+
+User-agent: *
+Disallow: /
