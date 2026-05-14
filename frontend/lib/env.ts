@@ -40,7 +40,13 @@ function shannonEntropyBitsPerChar(input: string): number {
 
 const serverEnvSchema = z.object({
   OPENAI_MODEL: z.string().trim().min(1).default("gpt-5"),
-  OPENAI_MAX_COMPLETION_TOKENS: z.coerce.number().int().positive().default(280),
+  // 1500 (not 280): gpt-5 is a reasoning model that spends hundreds of
+  // tokens on internal chain-of-thought BEFORE emitting any content delta.
+  // A 280-cap blew the entire budget on reasoning → empty stream → the
+  // "assistant returned an empty response" error users were hitting.
+  // 1500 gives reasoning + a full Coldplay answer comfortable room while
+  // staying well under the 60s function maxDuration.
+  OPENAI_MAX_COMPLETION_TOKENS: z.coerce.number().int().positive().default(1500),
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
   // Used by lib/session-crypto.ts to AES-256-GCM-seal the OpenAI key cookie.
   // Generate with: openssl rand -base64 48
