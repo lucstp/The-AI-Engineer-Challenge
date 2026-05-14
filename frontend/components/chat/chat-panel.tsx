@@ -19,6 +19,9 @@ interface ChatPanelProps {
   onConversationScroll: (scrollTop: number) => void;
   onAnimationDone: (messageId: string) => void;
   onDismissError: () => void;
+  /** Re-send the last user message after an error. Optional — if absent,
+   * the Retry button isn't rendered (e.g. before any submission has happened). */
+  onRetryLastMessage?: () => void;
   onChooseExamplePrompt: (prompt: string) => void;
   inputValue: string;
   onInputChange: (value: string) => void;
@@ -44,6 +47,7 @@ export function ChatPanel({
   onConversationScroll,
   onAnimationDone,
   onDismissError,
+  onRetryLastMessage,
   onChooseExamplePrompt,
   inputValue,
   onInputChange,
@@ -85,6 +89,7 @@ export function ChatPanel({
           onConversationScroll={onConversationScroll}
           onAnimationDone={onAnimationDone}
           onDismissError={onDismissError}
+          onRetryLastMessage={onRetryLastMessage}
           onChooseExamplePrompt={onChooseExamplePrompt}
           endOfMessagesRef={endOfMessagesRef}
         />

@@ -1,13 +1,15 @@
 "use client";
 
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 
 import { ChatPanel } from "@/components/chat/chat-panel";
 import { ConnectionStatusCard } from "@/components/chat/connection-status-card";
 import { LockedKeyCard } from "@/components/chat/locked-key-card";
+import { CrowdSilhouette } from "@/components/decoration/crowd-silhouette";
 import { Card } from "@/components/ui/card";
 import { MovingBorder } from "@/components/ui/moving-border";
 import { completeAssistantAnimation } from "@/lib/chat-state";
+import { useAmbientConfetti } from "@/lib/hooks/use-ambient-confetti";
 import { useChatPersistence } from "@/lib/hooks/use-chat-persistence";
 import { useChatScroll } from "@/lib/hooks/use-chat-scroll";
 import { useChatStreaming } from "@/lib/hooks/use-chat-streaming";
@@ -57,6 +59,20 @@ export function ChatShell({ initialIsApiKeyVerified }: ChatShellProps) {
 
   const isChatLocked = !key.isApiKeyVerified;
 
+  // Sync chat-locked state to `document.body` so CSS in globals.css can flip
+  // the page layout (centered when locked, top-anchored when unlocked) via a
+  // plain attribute selector — more reliable across browsers than `:has()`.
+  useEffect(() => {
+    document.body.dataset.chatLocked = isChatLocked ? "true" : "false";
+    return () => {
+      delete document.body.dataset.chatLocked;
+    };
+  }, [isChatLocked]);
+
+  // Ambient confetti — fireworks + side cannons cycle while the chat is
+  // unlocked. Paused while locked, hidden tab, or `prefers-reduced-motion`.
+  useAmbientConfetti({ enabled: !isChatLocked });
+
   const streaming = useChatStreaming({
     isChatLocked,
     setMessages: persistence.setMessages,
@@ -105,106 +121,116 @@ export function ChatShell({ initialIsApiKeyVerified }: ChatShellProps) {
   });
 
   return (
-    <section className="relative flex min-h-0 w-full justify-center">
-      <div
-        className={cn(
-          "chat-shell-frame w-full",
-          "max-w-[980px] lg:max-w-[940px] xl:max-w-[980px] 2xl:max-w-[1040px]",
-          shellBurst && "shell-burst"
-        )}
-        data-state={isChatLocked ? "locked" : "unlocked"}
-      >
-        <MovingBorder
-          borderRadius="1.5rem"
-          durationMs={11000}
-          borderWidthPx={2.5}
-          containerClassName="h-full w-full"
+    <>
+      <CrowdSilhouette isVisible={key.isApiKeyVerified} />
+      <section className="relative flex min-h-0 w-full justify-center">
+        <div
+          className={cn(
+            "chat-shell-frame w-full",
+            "max-w-[980px] lg:max-w-[940px] xl:max-w-[980px] 2xl:max-w-[1040px]",
+            shellBurst && "shell-burst"
+          )}
+          data-state={isChatLocked ? "locked" : "unlocked"}
         >
-          <Card
-            aria-label="AI chat interface"
-            className={cn(
-              "relative flex h-full w-full flex-col overflow-hidden text-white",
-              "gap-3 p-3 sm:gap-4 sm:p-4 md:p-6",
-              !isChatLocked && "min-h-[520px]"
-            )}
+          <MovingBorder
+            borderRadius="1.5rem"
+            durationMs={16000}
+            borderWidthPx={2.5}
+            containerClassName="h-full w-full"
           >
-            <ConnectionStatusCard
-              statusText={statusText}
-              hasError={
-                Boolean(streaming.errorMessage) ||
-                (!key.isApiKeyVerified && key.keyFeedback !== null)
-              }
-              onDisconnect={key.isApiKeyVerified ? key.disconnectVerifiedKey : undefined}
-              isDisconnecting={key.isDisconnecting}
-              isSoundEnabled={sound.isEnabled}
-              onToggleSound={sound.toggleEnabled}
-            />
-
-            {isChatLocked ? (
-              <div className="relative flex flex-1 flex-col justify-center">
-                <LockedKeyCard
-                  apiKeyInput={key.apiKeyInput}
-                  onApiKeyInputChange={key.handleApiKeyInputChange}
-                  onSubmit={key.verifyApiKey}
-                  // User-gesture audio unlock — fires synchronously inside
-                  // the form's submit handler so the browser accepts the
-                  // subsequent crowd.play().
-                  onBeforeSubmit={() => {
-                    void sound.startCrowd();
-                  }}
-                  isVerifyingKey={key.isVerifyingKey}
-                  isApiKeyVerified={key.isApiKeyVerified}
-                  keyFeedback={key.keyFeedback}
-                  keyFeedbackTone={key.keyFeedbackTone}
-                  isSwappingPanel={key.isSwappingPanel}
-                />
-              </div>
-            ) : (
-              <ChatPanel
-                messages={persistence.messages}
-                isLoading={streaming.isLoading}
-                isChatLocked={isChatLocked}
-                isRestoringChatState={persistence.isRestoringChatState}
-                isSwappingPanel={key.isSwappingPanel}
-                errorMessage={streaming.errorMessage}
-                conversationContainerRef={persistence.conversationContainerRef}
-                endOfMessagesRef={persistence.endOfMessagesRef}
-                onConversationScroll={persistence.handleConversationScroll}
-                onAnimationDone={(messageId) => {
-                  persistence.setMessages((prev) => {
-                    const completed = completeAssistantAnimation(prev, messageId);
-                    // First completed assistant message in the current
-                    // verified session === the welcome typewriter. Kick
-                    // off the music layer (idempotent on subsequent
-                    // assistant turns thanks to the ref latch).
-                    if (!musicStartedRef.current) {
-                      const animatedMessage = prev.find((m) => m.id === messageId);
-                      if (
-                        animatedMessage &&
-                        animatedMessage.role === "assistant" &&
-                        prev.every((m) => m.role !== "user")
-                      ) {
-                        musicStartedRef.current = true;
-                        void sound.startMusic();
-                      }
-                    }
-                    return completed;
-                  });
-                }}
-                onDismissError={() => streaming.setErrorMessage(null)}
-                onChooseExamplePrompt={(prompt) => {
-                  void streaming.submitMessage(prompt);
-                }}
-                inputValue={persistence.inputValue}
-                onInputChange={persistence.setInputValue}
-                onSubmitMessage={() => void streaming.submitMessage(persistence.inputValue)}
-                onStopRequest={streaming.stopCurrentRequest}
+            <Card
+              aria-label="AI chat interface"
+              className={cn(
+                "relative flex h-full w-full flex-col overflow-hidden text-white",
+                // Backdrop frost as Tailwind v4 utilities (NOT raw `backdrop-
+                // filter` in globals.css — that was conflicting with Tailwind's
+                // filter architecture and silently breaking the blur). The Card
+                // primitive auto-adds `chat-shell-glass` for the rest of the
+                // glass styling.
+                "backdrop-blur-[20px]",
+                "gap-3 p-3 sm:gap-4 sm:p-4 md:p-6",
+                !isChatLocked && "min-h-[520px]"
+              )}
+            >
+              <ConnectionStatusCard
+                statusText={statusText}
+                hasError={
+                  Boolean(streaming.errorMessage) ||
+                  (!key.isApiKeyVerified && key.keyFeedback !== null)
+                }
+                onDisconnect={key.isApiKeyVerified ? key.disconnectVerifiedKey : undefined}
+                isDisconnecting={key.isDisconnecting}
+                isSoundEnabled={sound.isEnabled}
+                onToggleSound={sound.toggleEnabled}
               />
-            )}
-          </Card>
-        </MovingBorder>
-      </div>
-    </section>
+
+              {isChatLocked ? (
+                <div className="relative flex flex-1 flex-col justify-center">
+                  <LockedKeyCard
+                    apiKeyInput={key.apiKeyInput}
+                    onApiKeyInputChange={key.handleApiKeyInputChange}
+                    onSubmit={key.verifyApiKey}
+                    // User-gesture audio unlock — fires synchronously inside
+                    // the form's submit handler so the browser accepts the
+                    // subsequent crowd.play().
+                    onBeforeSubmit={() => {
+                      void sound.startCrowd();
+                    }}
+                    isVerifyingKey={key.isVerifyingKey}
+                    isApiKeyVerified={key.isApiKeyVerified}
+                    keyFeedback={key.keyFeedback}
+                    keyFeedbackTone={key.keyFeedbackTone}
+                    isSwappingPanel={key.isSwappingPanel}
+                  />
+                </div>
+              ) : (
+                <ChatPanel
+                  messages={persistence.messages}
+                  isLoading={streaming.isLoading}
+                  isChatLocked={isChatLocked}
+                  isRestoringChatState={persistence.isRestoringChatState}
+                  isSwappingPanel={key.isSwappingPanel}
+                  errorMessage={streaming.errorMessage}
+                  conversationContainerRef={persistence.conversationContainerRef}
+                  endOfMessagesRef={persistence.endOfMessagesRef}
+                  onConversationScroll={persistence.handleConversationScroll}
+                  onAnimationDone={(messageId) => {
+                    persistence.setMessages((prev) => {
+                      const completed = completeAssistantAnimation(prev, messageId);
+                      // First completed assistant message in the current
+                      // verified session === the welcome typewriter. Kick
+                      // off the music layer (idempotent on subsequent
+                      // assistant turns thanks to the ref latch).
+                      if (!musicStartedRef.current) {
+                        const animatedMessage = prev.find((m) => m.id === messageId);
+                        if (
+                          animatedMessage &&
+                          animatedMessage.role === "assistant" &&
+                          prev.every((m) => m.role !== "user")
+                        ) {
+                          musicStartedRef.current = true;
+                          void sound.startMusic();
+                        }
+                      }
+                      return completed;
+                    });
+                  }}
+                  onDismissError={() => streaming.setErrorMessage(null)}
+                  onRetryLastMessage={() => void streaming.retryLastMessage()}
+                  onChooseExamplePrompt={(prompt) => {
+                    void streaming.submitMessage(prompt);
+                  }}
+                  inputValue={persistence.inputValue}
+                  onInputChange={persistence.setInputValue}
+                  onSubmitMessage={() => void streaming.submitMessage(persistence.inputValue)}
+                  onStopRequest={streaming.stopCurrentRequest}
+                />
+              )}
+            </Card>
+          </MovingBorder>
+        </div>
+      </section>
+    </>
   );
 }
 

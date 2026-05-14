@@ -4,6 +4,7 @@ import type { FormEvent, KeyboardEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { fireOnUserAction } from "@/lib/confetti";
 
 interface ChatComposerProps {
   value: string;
@@ -32,12 +33,18 @@ export function ChatComposer({
 }: ChatComposerProps) {
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (!isDisabled && value.trim().length > 0 && !isLoading) {
+      fireOnUserAction();
+    }
     onSubmit();
   }
 
   function handleKeyDown(event: KeyboardEvent<HTMLTextAreaElement>) {
     if (event.key === "Enter" && !event.shiftKey) {
       event.preventDefault();
+      if (!isDisabled && value.trim().length > 0 && !isLoading) {
+        fireOnUserAction();
+      }
       onSubmit();
     }
   }
@@ -76,7 +83,14 @@ export function ChatComposer({
         }
         rows={1}
         disabled={isLoading || isDisabled}
-        className="composer-field max-h-36 min-h-[56px] resize-none rounded-none border-0 bg-transparent px-4 py-[0.92rem] text-[1.02rem] text-white shadow-none placeholder:text-white/66 focus-visible:border-0 focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0"
+        // `min-h-0` overrides the base Textarea's min-h-[64px] which was
+        // forcing the textarea taller than its content — that's what was
+        // parking text at the top with dead space below on 2-line wrap.
+        // `[field-sizing:content]` (Chrome 123+ / Safari 17.4+ / FF 124+,
+        // current at 2026) snaps textarea height to exactly content +
+        // padding, eliminating any unused vertical space. The shell's own
+        // min-height: 64px keeps the resting size comfortable.
+        className="composer-field max-h-36 min-h-0 resize-none rounded-none border-0 bg-transparent px-4 py-[1.05rem] text-[1.02rem] text-white shadow-none [field-sizing:content] placeholder:text-white/66 focus-visible:border-0 focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0"
       />
       <div className="composer-tools">
         {!isLoading ? (

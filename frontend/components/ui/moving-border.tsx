@@ -29,7 +29,14 @@ export function MovingBorder({
 }: MovingBorderProps) {
   return (
     <div
-      className={cn("relative overflow-hidden", containerClassName, className)}
+      // NO `overflow: hidden` on this outer wrapper — that was clipping the
+      // chat-shell-glass's outer box-shadow halo (the white/cyan/violet glow)
+      // at the rounded corners. The MovingBorderRing uses an absolute-inset
+      // mask which defines its own clipping, so removing overflow:hidden does
+      // NOT bleed the moving border outside the shell. The INNER content div
+      // takes `overflow: hidden` so children (Card, MessageList) still clip
+      // cleanly to the rounded shape.
+      className={cn("relative", containerClassName, className)}
       style={{ borderRadius, ...style }}
       {...props}
     >
@@ -40,6 +47,12 @@ export function MovingBorder({
         borderRadius={borderRadius}
         blobClassName={borderClassName}
       />
+      {/* NO `overflow: hidden` on this inner content div either. The Card
+         child (chat-shell-glass) has its own `overflow-hidden` in
+         chat-shell.tsx so child clipping is already handled. Adding it here
+         would clip the Card's box-shadow halo (Card paints into the parent
+         box, and an overflow:hidden parent clips shadow that extends past
+         the box). This was the second clipping layer hiding the glow. */}
       <div className={cn("relative h-full w-full", contentClassName)} style={{ borderRadius }}>
         {children}
       </div>

@@ -1,26 +1,14 @@
 /**
- * Page footer — rainbow Coldplay wordmark sitting on plain page background,
- * legal disclaimer beneath, separate licensed audio credits, and closing
- * gradient hairline.
+ * Page footer — legal disclaimer paragraph + separate licensed audio
+ * credits. The stylized rainbow "COLDPLAY" wordmark image was removed
+ * to stay clearly within nominative-fair-use territory: the project
+ * references the band by name in plain text only, never reproduces the
+ * branded logo/wordmark.
  */
 export function DisclaimerFooter() {
   return (
     <footer className="mx-auto w-full max-w-[7xl] px-3 pt-2">
       <div className="flex flex-col items-center gap-3">
-        {/* Intrinsic dims passed explicitly so the browser reserves the
-            aspect-ratio box before load → zero CLS, passes Lighthouse
-            unsized-images audit. CSS sizing (h-8/9/10 w-auto) still
-            controls actual rendered size. */}
-        <img
-          src="/mm-logo1_copy.webp"
-          alt="Coldplay"
-          width={250}
-          height={44}
-          loading="lazy"
-          decoding="async"
-          className="h-8 w-auto opacity-95 sm:h-9 lg:h-10"
-        />
-
         <p className="m-0 max-w-5xl text-center text-white/80 text-xs leading-relaxed [text-shadow:0_1px_2px_rgba(0,0,0,0.5)] sm:text-[0.78rem] lg:text-[0.82rem]">
           <span className="font-bold text-lime-300 uppercase tracking-[0.18em] [text-shadow:0_0_10px_rgba(190,242,100,0.45)]">
             Disclaimer

@@ -1,10 +1,11 @@
-import { Sparkles } from "lucide-react";
+import { Sparkles, User } from "lucide-react";
 import type { RefObject } from "react";
 import ReactMarkdown, { type Components } from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { TypewriterText } from "@/components/chat/typewriter-text";
 import { Button } from "@/components/ui/button";
 import type { ChatMessage } from "@/lib/chat-types";
+import { fireOnUserAction } from "@/lib/confetti";
 import { cn } from "@/lib/utils";
 
 // Multi-channel typographic hierarchy for assistant markdown output.
@@ -20,7 +21,10 @@ const markdownComponents: Components = {
     </p>
   ),
   strong: ({ children, ...props }) => (
-    <strong className="font-bold text-violet-400" {...props}>
+    <strong
+      className="font-semibold text-cyan-200 [text-shadow:0_0_8px_rgba(125,249,255,0.25)]"
+      {...props}
+    >
       {children}
     </strong>
   ),
@@ -128,6 +132,9 @@ interface MessageListProps {
   onConversationScroll: (scrollTop: number) => void;
   onAnimationDone: (messageId: string) => void;
   onDismissError: () => void;
+  /** Re-send the last user message after an error. When provided, a Retry
+   * button renders alongside Dismiss so the user can recover in one click. */
+  onRetryLastMessage?: () => void;
   onChooseExamplePrompt: (prompt: string) => void;
   endOfMessagesRef: RefObject<HTMLDivElement | null>;
 }
@@ -148,6 +155,7 @@ export function MessageList({
   onConversationScroll,
   onAnimationDone,
   onDismissError,
+  onRetryLastMessage,
   onChooseExamplePrompt,
   endOfMessagesRef,
 }: MessageListProps) {
@@ -193,8 +201,11 @@ export function MessageList({
                     type="button"
                     variant="ghost"
                     size="default"
-                    onClick={() => onChooseExamplePrompt(prompt)}
-                    className="prompt-glass h-auto min-h-14 justify-start whitespace-normal rounded-2xl border-white/50 bg-linear-to-br from-white/24 via-cyan-100/16 to-fuchsia-100/14 px-5 py-3 pl-6 font-bold text-sm text-white leading-relaxed shadow-[inset_0_1px_0_rgba(255,255,255,0.42),0_0_0_1px_rgba(186,230,253,0.18)] backdrop-blur-xl transition hover:-translate-y-1 hover:border-white/65 hover:bg-white/28"
+                    onClick={() => {
+                      fireOnUserAction();
+                      onChooseExamplePrompt(prompt);
+                    }}
+                    className="prompt-glass h-auto min-h-14 justify-start whitespace-normal rounded-2xl border-cyan-200/35 bg-linear-to-br from-white/12 via-cyan-200/12 to-fuchsia-200/12 px-5 py-3 pl-6 font-medium text-cyan-50 text-sm leading-relaxed shadow-[inset_0_1px_0_rgba(255,255,255,0.35),0_0_0_1px_rgba(186,230,253,0.16),0_0_24px_-8px_rgba(125,249,255,0.25)] backdrop-blur-xl transition-all duration-300 hover:-translate-y-1 hover:border-cyan-200/55 hover:bg-linear-to-br hover:from-cyan-200/18 hover:via-violet-300/16 hover:to-fuchsia-300/18 hover:text-white hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.5),0_0_0_1px_rgba(186,230,253,0.32),0_0_36px_-8px_rgba(125,249,255,0.45),0_0_60px_-12px_rgba(167,139,250,0.35)]"
                   >
                     {prompt}
                   </Button>
@@ -211,20 +222,35 @@ export function MessageList({
               {message.role === "user" ? (
                 <article
                   aria-label="Your message"
-                  className="flex w-full max-w-[92%] flex-col items-end gap-2.5 whitespace-pre-wrap text-right leading-relaxed sm:max-w-[86%]"
+                  className="flex w-full max-w-[92%] items-start justify-end gap-3 leading-relaxed sm:max-w-[86%]"
                 >
-                  <div className="flex items-center gap-2 px-1">
-                    <span className="font-normal text-base text-white/90 leading-none">You</span>
-                    <time
-                      className="font-normal text-sm text-white/72 leading-none"
-                      dateTime={new Date(message.createdAt).toISOString()}
-                    >
-                      {formatMessageTime(message.createdAt)}
-                    </time>
+                  <div className="flex flex-col items-end gap-1.5 whitespace-pre-wrap text-right">
+                    <div className="flex items-baseline gap-2">
+                      <span className="font-normal text-base text-white leading-none tracking-tight">
+                        You
+                      </span>
+                      <time
+                        className="font-normal text-sm text-white/72 leading-none"
+                        dateTime={new Date(message.createdAt).toISOString()}
+                      >
+                        {formatMessageTime(message.createdAt)}
+                      </time>
+                    </div>
+                    <div className="px-0 py-1 font-light text-[rgba(253,224,71,1)] text-base leading-7">
+                      <p className="m-0">{message.content}</p>
+                    </div>
                   </div>
-                  <div className="rounded-2xl px-0 py-1 font-light text-[rgba(253,224,71,1)] text-base leading-relaxed">
-                    <p className="m-0">{message.content}</p>
-                  </div>
+                  {/* User avatar — mirrors the assistant's Sparkles avatar
+                      (rounded-full, same dims, same shadow stack) but with
+                      a warmer fuchsia → violet → amber palette so the two
+                      bubbles contrast visually. Lives on the RIGHT side of
+                      the user row. */}
+                  <span
+                    className="ai-avatar-aurora inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-white/28 bg-linear-to-br from-fuchsia-300/35 via-violet-300/26 to-amber-200/35 text-amber-50 shadow-[inset_0_1px_0_rgba(255,255,255,0.45),0_10px_22px_-14px_rgba(2,6,23,0.95)]"
+                    aria-hidden
+                  >
+                    <User className="h-4 w-4" />
+                  </span>
                 </article>
               ) : (
                 <article
@@ -282,8 +308,11 @@ export function MessageList({
                 type="button"
                 variant="ghost"
                 size="default"
-                onClick={() => onChooseExamplePrompt(prompt)}
-                className="prompt-glass h-auto min-h-14 justify-start whitespace-normal rounded-2xl border-white/50 bg-linear-to-br from-white/24 via-cyan-100/16 to-fuchsia-100/14 px-5 py-3 pl-6 font-bold text-sm text-white leading-relaxed shadow-[inset_0_1px_0_rgba(255,255,255,0.42),0_0_0_1px_rgba(186,230,253,0.18)] backdrop-blur-xl transition hover:-translate-y-1 hover:border-white/65 hover:bg-white/28"
+                onClick={() => {
+                  fireOnUserAction();
+                  onChooseExamplePrompt(prompt);
+                }}
+                className="prompt-glass h-auto min-h-14 justify-start whitespace-normal rounded-2xl border-cyan-200/35 bg-linear-to-br from-white/12 via-cyan-200/12 to-fuchsia-200/12 px-5 py-3 pl-6 font-medium text-cyan-50 text-sm leading-relaxed shadow-[inset_0_1px_0_rgba(255,255,255,0.35),0_0_0_1px_rgba(186,230,253,0.16),0_0_24px_-8px_rgba(125,249,255,0.25)] backdrop-blur-xl transition-all duration-300 hover:-translate-y-1 hover:border-cyan-200/55 hover:bg-linear-to-br hover:from-cyan-200/18 hover:via-violet-300/16 hover:to-fuchsia-300/18 hover:text-white hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.5),0_0_0_1px_rgba(186,230,253,0.32),0_0_36px_-8px_rgba(125,249,255,0.45),0_0_60px_-12px_rgba(167,139,250,0.35)]"
               >
                 {prompt}
               </Button>
@@ -311,15 +340,24 @@ export function MessageList({
           className="flex flex-col items-start justify-between gap-2 rounded-xl border border-rose-200/45 bg-rose-950/50 px-3 py-2 text-rose-50 text-sm shadow-[inset_0_1px_0_rgba(255,255,255,0.12)] backdrop-blur-md sm:flex-row sm:items-center sm:gap-3"
         >
           <span>{errorMessage}</span>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={onDismissError}
-            className="self-end sm:self-auto"
-          >
-            Dismiss
-          </Button>
+          <div className="flex gap-2 self-end sm:self-auto">
+            {onRetryLastMessage ? (
+              <Button
+                type="button"
+                variant="default"
+                size="sm"
+                onClick={() => {
+                  onDismissError();
+                  onRetryLastMessage();
+                }}
+              >
+                Retry
+              </Button>
+            ) : null}
+            <Button type="button" variant="outline" size="sm" onClick={onDismissError}>
+              Dismiss
+            </Button>
+          </div>
         </div>
       ) : null}
 

@@ -39,18 +39,25 @@ export function ConnectionStatusCard({
 }: ConnectionStatusCardProps) {
   return (
     <header className="chat-header">
-      <h1 className="m-0 font-bold text-[0.68rem] text-white/85 uppercase tracking-[0.24em] sm:text-xs">
-        <span className="bg-linear-to-r from-cyan-300 via-fuchsia-400 to-violet-400 bg-clip-text text-transparent">
-          Coldplay
-        </span>{" "}
-        Chat
+      {/* Wordmark — both halves rendered in solid colors (not a gradient on
+          transparent text, which had poor contrast against the new translucent
+          glass and was hard to read). Coldplay stays cyan-tinted for brand
+          recognition; Chat is white for legibility. drop-shadow on the parent
+          makes the wordmark readable on every aurora band the glass shows. */}
+      <h1 className="m-0 font-bold text-[0.68rem] text-white uppercase tracking-[0.24em] [text-shadow:0_1px_2px_rgba(2,6,23,0.65)] sm:text-xs">
+        <span className="text-fuchsia-300">Coldplay</span> <span className="text-white">Chat</span>
       </h1>
       <div className="flex items-center gap-2">
         <SoundToggle isEnabled={isSoundEnabled} onToggle={onToggleSound} />
+        {/* All three header controls now share the SAME explicit height
+            (h-7 / sm:h-8) so the row reads as a single visual unit. Before:
+            the SoundToggle (h-7) was visibly taller than the status pill +
+            Disconnect button (content-driven ~h-5), creating a mismatched
+            row. */}
         <div
           role="status"
           aria-live="polite"
-          className="inline-flex max-w-[60vw] items-center gap-2 rounded-full border border-white/22 bg-white/6 px-2.5 py-1 font-semibold text-[0.68rem] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.18)] sm:text-xs"
+          className="inline-flex h-7 max-w-[60vw] items-center gap-2 rounded-full border border-white/22 bg-white/6 px-2.5 font-semibold text-[0.68rem] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.18)] sm:h-8 sm:text-xs"
         >
           <span
             className={cn(
@@ -67,7 +74,7 @@ export function ConnectionStatusCard({
             type="button"
             onClick={onDisconnect}
             disabled={isDisconnecting}
-            className="inline-flex items-center rounded-full border border-white/22 bg-white/4 px-2.5 py-1 font-semibold text-[0.68rem] text-white/85 transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60 sm:text-xs"
+            className="inline-flex h-7 items-center rounded-full border border-white/22 bg-white/4 px-2.5 font-semibold text-[0.68rem] text-white/85 transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60 sm:h-8 sm:text-xs"
             aria-label="Disconnect verified key"
           >
             {isDisconnecting ? "Disconnecting..." : "Disconnect"}
