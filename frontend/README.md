@@ -181,12 +181,16 @@ Plain English. Each link points at the code.
 4. **Production Branch** → `main`
 5. **Environment Variables** (set on both Production AND Preview):
 
-| Var | Value |
-|---|---|
-| `SESSION_SECRET` | `openssl rand -base64 48` (NEW value, distinct from local) |
-| `BLOB_AUDIO_AEROPHONIA_URL` | full Vercel Blob URL of your licensed audio |
-| `KV_REST_API_URL` | auto-set when you connect Upstash from **Storage → Marketplace** with no custom prefix |
-| `KV_REST_API_TOKEN` | auto-set by the same Upstash integration |
+| Var | Required? | Value |
+|---|---|---|
+| `SESSION_SECRET` | **Yes** | `openssl rand -base64 48` (NEW value, distinct from local) |
+| `OPENAI_MODEL` | No (defaults to `gpt-5`) | **`gpt-4.1-mini`** for the course-canonical configuration (see [Things that look weird on purpose](#things-that-look-weird-on-purpose) for the trade-off vs the `gpt-5` default) |
+| `OPENAI_MAX_COMPLETION_TOKENS` | No (defaults to `1500`) | `1500` is fine for `gpt-4.1-mini` (no reasoning overhead). Bump to `4000` if using `gpt-5` so reasoning has room without exhausting the budget mid-answer. |
+| `BLOB_AUDIO_AEROPHONIA_URL` | No | Full Vercel Blob URL of your licensed audio |
+| `KV_REST_API_URL` | No | Auto-set when you connect Upstash from **Storage → Marketplace** with no custom prefix |
+| `KV_REST_API_TOKEN` | No | Auto-set by the same Upstash integration |
+
+> **Authoritative schema:** [`lib/env.ts`](lib/env.ts) — boot-time zod validation, fails loud at startup rather than silently at first request.
 
 6. Click Deploy
 
@@ -245,7 +249,7 @@ The shell is one card. It glows. It has personality.
 - **`<meta name="robots" content="noindex,nofollow">`** in [`app/layout.tsx`](app/layout.tsx) + `Disallow: /` in [`public/robots.txt`](public/robots.txt). Intentional. Non-commercial educational use of Coldplay brand IP under fair use; allowing search-engine indexing would risk brand-confusion concerns. Lighthouse drops SEO to ~63 because of this — by design, not a regression.
 - **The in-memory rate limiter falls back from Upstash when env vars are missing**, with a loud production warning. Single-instance hobby deployments are fine; autoscaled serverless absolutely is not. The warning makes the gap visible in logs.
 - **Audio starts on the *first* user gesture** because browsers refuse `play()` outside one. The cyan-glow "Turn on sound for the full experience" pill on the locked card is the contract: it warns sound is coming; clicking Verify is the gesture that unlocks the crowd track.
-- **`gpt-5` is the default model** because that's what the sibling FastAPI backend uses. Override via `OPENAI_MODEL` if you want `gpt-4o-mini` or anything else — see [`lib/env.ts`](lib/env.ts).
+- **`gpt-5` is the code default model** because that matches the sibling FastAPI backend ([`api/index.py:37`](../api/index.py)). But `gpt-5` is a reasoning model — it runs silent chain-of-thought before emitting any visible tokens (5-30s wait before content streams), and if `OPENAI_MAX_COMPLETION_TOKENS` is too low the reasoning eats the entire budget and the user gets an empty response. **The course-canonical model is `gpt-4.1-mini`** — that's what the [AI Maker Space — AI Engineering Challenge](https://github.com/AI-Maker-Space/The-AI-Engineer-Challenge) course teaches ("*Accessing 'gpt-4.1-mini' (ChatGPT) like a developer*"). For the course submission deployment, set `OPENAI_MODEL=gpt-4.1-mini` in Vercel — fast (TTFT <1s, ~3-5s end-to-end), no reasoning overhead, and the `OPENAI_MAX_COMPLETION_TOKENS` default of `1500` is plenty. The empty-response incident this surfaced is documented in [`lib/env.ts`](lib/env.ts) lines 43-49.
 - **The disclaimer paragraph at the bottom of the page is not boilerplate.** It exists because this project uses the *Coldplay* name nominatively — describing the subject of the chat, not implying any affiliation. The same goes for the `Audio Credits` block listing Pond5 / TangerineMedia properly.
 
 ---
