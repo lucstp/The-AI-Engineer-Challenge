@@ -61,12 +61,20 @@ export default async function HomePage() {
 
       <AuroraBackground />
 
-      {/* Layout root — CSS in globals.css reads `body[data-chat-locked]`
-          (set by useEffect in ChatShell) and switches flex behavior:
-          locked → justify-content: center (whole content block centers
-          vertically); unlocked → disclaimer wrapper gets mt-auto so the
-          chat shell expands at top and the footer pins to bottom. */}
-      <div data-layout-root className="mx-auto flex w-full max-w-[1320px] flex-col gap-4 lg:h-full">
+      {/* Layout root — CSS in globals.css reads `[data-layout-root]
+          [data-chat-locked]` and switches flex behavior: locked →
+          justify-content: center (whole content block centers vertically);
+          unlocked → disclaimer wrapper gets mt-auto so the chat shell
+          expands at top and the footer pins to bottom. The attribute is
+          set HERE on the server so first paint matches final layout — no
+          hydration race where the shell briefly renders at the top then
+          reflows to center. ChatShell still syncs it on client state
+          changes (verify / disconnect). */}
+      <div
+        data-layout-root
+        data-chat-locked={initialIsApiKeyVerified ? "false" : "true"}
+        className="mx-auto flex w-full max-w-[1320px] flex-col gap-4 lg:h-full"
+      >
         <Hero />
         <ChatShell initialIsApiKeyVerified={initialIsApiKeyVerified} />
         <div data-disclaimer-wrapper>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { ChatPanel } from "@/components/chat/chat-panel";
 import { ConnectionStatusCard } from "@/components/chat/connection-status-card";
@@ -59,15 +59,28 @@ export function ChatShell({ initialIsApiKeyVerified }: ChatShellProps) {
 
   const isChatLocked = !key.isApiKeyVerified;
 
-  // Sync chat-locked state to `document.body` so CSS in globals.css can flip
-  // the page layout (centered when locked, top-anchored when unlocked) via a
-  // plain attribute selector — more reliable across browsers than `:has()`.
+  // Sync chat-locked state to `[data-layout-root]` so CSS in globals.css
+  // flips page layout (centered when locked, top-anchored when unlocked).
+  // The attribute is ALSO set on the server in `app/page.tsx`, so first
+  // paint already has the correct layout — this effect only handles
+  // subsequent state changes (verify / disconnect).
   useEffect(() => {
-    document.body.dataset.chatLocked = isChatLocked ? "true" : "false";
-    return () => {
-      delete document.body.dataset.chatLocked;
-    };
+    const root = document.querySelector<HTMLElement>("[data-layout-root]");
+    if (root) {
+      root.dataset.chatLocked = isChatLocked ? "true" : "false";
+    }
   }, [isChatLocked]);
+
+  // First-paint animation gate. Without it, `panel-enter` fires on the
+  // very first mount because `isSwappingPanel === false` is true both
+  // BEFORE any swap (initial mount) and AFTER one finishes. We only
+  // want the entry animation on the locked ↔ verified TRANSITION, so
+  // hold it off until after hydration.
+  const [hasMounted, setHasMounted] = useState(false);
+  useEffect(() => {
+    setHasMounted(true);
+  }, []);
+  const isInitialPaint = !hasMounted;
 
   // Ambient confetti — fireworks + side cannons cycle while the chat is
   // unlocked. Paused while locked, hidden tab, or `prefers-reduced-motion`.
@@ -181,6 +194,7 @@ export function ChatShell({ initialIsApiKeyVerified }: ChatShellProps) {
                     keyFeedback={key.keyFeedback}
                     keyFeedbackTone={key.keyFeedbackTone}
                     isSwappingPanel={key.isSwappingPanel}
+                    isInitialPaint={isInitialPaint}
                   />
                 </div>
               ) : (
@@ -190,6 +204,7 @@ export function ChatShell({ initialIsApiKeyVerified }: ChatShellProps) {
                   isChatLocked={isChatLocked}
                   isRestoringChatState={persistence.isRestoringChatState}
                   isSwappingPanel={key.isSwappingPanel}
+                  isInitialPaint={isInitialPaint}
                   errorMessage={streaming.errorMessage}
                   conversationContainerRef={persistence.conversationContainerRef}
                   endOfMessagesRef={persistence.endOfMessagesRef}
