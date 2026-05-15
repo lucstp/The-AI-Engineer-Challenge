@@ -394,17 +394,21 @@
     border: 0;
   }
 
-  /* Conditional layout — body[data-chat-locked] is set by a useEffect inside
-     ChatShell. CSS targets it via a plain descendant selector (no :has()
-     dependency, which proved unreliable in some browser/Tailwind v4 combos).
+  /* Conditional layout — `data-chat-locked` is set ON THE SAME ELEMENT
+     (`[data-layout-root]`) at SSR time from `app/page.tsx` so the locked
+     layout is correct on FIRST PAINT (no hydration race where the shell
+     briefly renders at the top then reflows to centered). ChatShell
+     syncs it on client state changes via the same attribute. Targeting
+     the element directly (not via `body`) avoids the prior boot-time
+     window when the body attribute hadn't yet been written.
      Locked → flex column centers vertically as a single group.
-     Unlocked → disclaimer wrapper gets margin-top: auto to pin to viewport
-     bottom; chat shell expands to fill the upper area. */
+     Unlocked → disclaimer wrapper gets margin-top: auto to pin to
+     viewport bottom; chat shell expands to fill the upper area. */
   @media (min-width: 1024px) {
-    body[data-chat-locked="false"] [data-disclaimer-wrapper] {
+    [data-layout-root][data-chat-locked="false"] [data-disclaimer-wrapper] {
       margin-top: auto;
     }
-    body[data-chat-locked="true"] [data-layout-root] {
+    [data-layout-root][data-chat-locked="true"] {
       justify-content: center;
     }
   }

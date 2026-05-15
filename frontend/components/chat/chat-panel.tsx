@@ -13,6 +13,12 @@ interface ChatPanelProps {
   isChatLocked: boolean;
   isRestoringChatState: boolean;
   isSwappingPanel: boolean;
+  /**
+   * True on the very first render only — gates `panel-enter` so the
+   * panel is static on initial paint and only animates on the verified
+   * ↔ locked transition. Flipped by a post-mount `useState` in ChatShell.
+   */
+  isInitialPaint: boolean;
   errorMessage: string | null;
   conversationContainerRef: RefObject<HTMLElement | null>;
   endOfMessagesRef: RefObject<HTMLDivElement | null>;
@@ -41,6 +47,7 @@ export function ChatPanel({
   isChatLocked,
   isRestoringChatState,
   isSwappingPanel,
+  isInitialPaint,
   errorMessage,
   conversationContainerRef,
   endOfMessagesRef,
@@ -58,7 +65,7 @@ export function ChatPanel({
     <div
       className={cn(
         "flex min-h-0 flex-1 flex-col gap-3 sm:gap-4",
-        isSwappingPanel ? "panel-exit" : "panel-enter"
+        isSwappingPanel ? "panel-exit" : isInitialPaint ? null : "panel-enter"
       )}
     >
       {isRestoringChatState ? (
