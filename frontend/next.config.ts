@@ -1,4 +1,13 @@
+import bundleAnalyzer from "@next/bundle-analyzer";
 import type { NextConfig } from "next";
+
+// Bundle analyzer — opt-in via `pnpm analyze` (sets ANALYZE=true). Pops
+// open the bundle visualization in your browser after build so we can
+// keep an eye on what's shipped to the client. Tree-shake regressions
+// surface as the first thing a reviewer sees.
+const withBundleAnalyzer = bundleAnalyzer({
+  enabled: process.env.ANALYZE === "true",
+});
 
 /**
  * Static security headers applied to every response. Per-request headers
@@ -69,4 +78,4 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+export default withBundleAnalyzer(nextConfig);
