@@ -1,19 +1,16 @@
-import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 
+import { getVerifiedKey } from "@/lib/data/auth";
 import { serverEnv } from "@/lib/env";
 import { checkRateLimit, getClientKey } from "@/lib/rate-limit";
 import {
   chatRequestSchema,
-  isPlausibleOpenAiKey,
   openAiErrorResponseSchema,
   openAiStreamChunkSchema,
 } from "@/lib/schemas";
-import { unseal } from "@/lib/session-crypto";
 
 export const runtime = "nodejs";
 
-const OPENAI_API_KEY_COOKIE = "openai_api_key";
 const OPENAI_CHAT_COMPLETIONS_ENDPOINT = "https://api.openai.com/v1/chat/completions";
 const OPENAI_TIMEOUT_MS = 60_000;
 const OPENAI_MODEL = serverEnv.OPENAI_MODEL;
@@ -129,13 +126,11 @@ export async function POST(request: Request): Promise<Response> {
     );
   }
 
-  // Cookie is AES-256-GCM sealed. unseal() returns null on any tamper or
-  // wrong-key failure — fail closed, never trust a partial decrypt.
-  // PR 8 layers a sliding-window rate limit before this work happens.
-  const cookieStore = await cookies();
-  const sealed = cookieStore.get(OPENAI_API_KEY_COOKIE)?.value;
-  const apiKey = typeof sealed === "string" ? unseal(sealed) : null;
-  if (apiKey === null || !isPlausibleOpenAiKey(apiKey)) {
+  // DAL handles cookie read + AES-256-GCM unseal + key-shape validation
+  // in one call. Returns null on ANY tamper, absence, decrypt failure, or
+  // shape mismatch — fail closed. See `lib/data/auth.ts`.
+  const apiKey = await getVerifiedKey();
+  if (apiKey === null) {
     return NextResponse.json(
       { detail: "OpenAI key not verified. Please re-enter your key." },
       { status: 401, headers: { "x-request-id": requestId } }
