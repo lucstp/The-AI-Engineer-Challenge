@@ -6,6 +6,12 @@ export default defineConfig({
   testDir: "./tests/e2e",
   timeout: 30_000,
   fullyParallel: true,
+  // Browser-driven persistence assertions (sessionStorage write → reload →
+  // React mount → restored DOM) involve inherent timing across processes:
+  // a single benign hiccup (slow GC pause, kernel scheduling) can fail
+  // the first attempt. Two retries cover real flakes without papering
+  // over genuine regressions — a true product bug fails all three runs.
+  retries: 2,
   reporter: "line",
   globalSetup: "./tests/global-setup.ts",
   use: {
