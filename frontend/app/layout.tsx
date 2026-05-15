@@ -1,3 +1,4 @@
+import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import type { Metadata, Viewport } from "next";
 
@@ -82,6 +83,11 @@ export default function RootLayout({
             Pro. Lives as a sibling of children so it doesn't intercept
             any layout or styling. */}
         <SpeedInsights />
+        {/* Vercel Web Analytics — anonymous page-view tracking reported
+            to the project's Analytics tab. Same no-op-off-Vercel + no-
+            DOM behavior as SpeedInsights. Companion data: SpeedInsights
+            covers perf, Analytics covers reach. */}
+        <Analytics />
       </body>
     </html>
   );
