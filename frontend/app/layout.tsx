@@ -1,3 +1,4 @@
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import type { Metadata, Viewport } from "next";
 
 import "./globals.css";
@@ -75,6 +76,12 @@ export default function RootLayout({
           Skip to main content
         </a>
         {children}
+        {/* Vercel Speed Insights — Core Web Vitals (LCP, FID, CLS, INP,
+            TTFB, FCP) reported to the Vercel project's Speed Insights
+            tab. No-op when not running on Vercel; zero-config on Vercel
+            Pro. Lives as a sibling of children so it doesn't intercept
+            any layout or styling. */}
+        <SpeedInsights />
       </body>
     </html>
   );
