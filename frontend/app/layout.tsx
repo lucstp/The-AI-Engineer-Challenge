@@ -7,7 +7,13 @@ const SITE_DESCRIPTION =
   "An AI companion for the universe of Coldplay — songs, albums, eras, members, live shows, and everything in between. A non-commercial educational student project.";
 
 export const metadata: Metadata = {
-  metadataBase: new URL("http://localhost:3000"),
+  // Vercel auto-sets VERCEL_URL to the deployment's own hostname for
+  // every prod + preview build. Fall back to localhost in dev. Critical
+  // for social shares: OG image URLs resolve relative to this base, so a
+  // wrong value produces broken Twitter / Slack / LinkedIn cards.
+  metadataBase: new URL(
+    process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000"
+  ),
   title: {
     default: SITE_NAME,
     template: `%s · ${SITE_NAME}`,
