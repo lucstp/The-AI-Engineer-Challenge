@@ -87,7 +87,7 @@ export function LockedKeyCard({
       </p>
       <form
         onSubmit={handleSubmit}
-        className="grid w-full max-w-[560px] grid-cols-1 gap-2.5 sm:grid-cols-[1fr_auto] sm:gap-3"
+        className="grid w-full max-w-[560px] grid-cols-[1fr_auto] gap-2.5 sm:gap-3"
       >
         <Label htmlFor="openai-key" className="sr-only">
           OpenAI API key

@@ -24,7 +24,7 @@ export default async function HomePage() {
   return (
     <main
       id="main-content"
-      className="relative isolate min-h-svh overflow-y-auto overflow-x-hidden px-3 py-5 sm:px-4 sm:py-6 lg:h-svh lg:min-h-0 lg:overflow-hidden lg:px-8 lg:py-8 xl:px-10 xl:py-10"
+      className="relative isolate flex h-svh flex-col overflow-y-auto overflow-x-hidden px-3 py-5 sm:px-4 sm:py-6 lg:px-8 lg:py-8 xl:px-10 xl:py-10"
     >
       {/* "Love is the only answer" handwritten epigraphs flank the chat shell
           diagonally — upper-left + middle-right. Positioned with
