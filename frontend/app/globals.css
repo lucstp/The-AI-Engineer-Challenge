@@ -290,39 +290,41 @@
 
     /* Chat shell heights — drive the locked → unlocked expansion animation.
        Kept in `:root` (not `@theme`) because Tailwind v4 has no `height`
-       namespace; consumed via `var(...)` in the .chat-shell-frame @utility. */
+       namespace; consumed via `var(...)` in the .chat-shell-frame @utility.
+       --shell-h-unlocked = 100% resolves against the chat-shell <section>'s
+       flex-1 height when unlocked (see chat-shell.tsx). --shell-max-h-unlocked
+       = 100svh is effectively uncapped — bounded only by <main>'s `h-svh`.
+       Uniform across all breakpoints: same UX mobile → 2xl. */
     --shell-h-locked: clamp(320px, 44svh, 380px);
-    --shell-h-unlocked: 72svh;
-    --shell-max-h-unlocked: 820px;
+    --shell-h-unlocked: 100%;
+    --shell-max-h-unlocked: 100svh;
   }
 
   @media (min-width: 640px) {
     :root {
       --shell-h-locked: clamp(340px, 42svh, 400px);
-      --shell-h-unlocked: 74svh;
+      /* --shell-h-unlocked inherits 100% from :root */
     }
   }
 
   @media (min-width: 1024px) {
     :root {
       --shell-h-locked: clamp(360px, 40svh, 440px);
-      --shell-h-unlocked: 88svh;
-      --shell-max-h-unlocked: 960px;
+      /* --shell-h-unlocked inherits 100% from :root */
     }
   }
 
   @media (min-width: 1280px) {
     :root {
       --shell-h-locked: clamp(380px, 42svh, 460px);
-      --shell-h-unlocked: 90svh;
-      --shell-max-h-unlocked: 1020px;
+      /* --shell-h-unlocked inherits 100% from :root */
     }
   }
 
   @media (min-width: 1536px) {
     :root {
       --shell-h-locked: clamp(400px, 44svh, 480px);
-      --shell-max-h-unlocked: 1080px;
+      /* --shell-max-h-unlocked inherits 100svh from :root */
     }
   }
 

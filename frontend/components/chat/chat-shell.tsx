@@ -183,7 +183,15 @@ export function ChatShell({ initialIsApiKeyVerified }: ChatShellProps) {
   return (
     <>
       <CrowdSilhouette isVisible={key.isApiKeyVerified} />
-      <section className="relative flex min-h-0 w-full justify-center">
+      <section
+        className={cn(
+          "relative flex min-h-0 w-full justify-center",
+          // Grow into the remaining LayoutRoot space ONLY when unlocked.
+          // Locked stays auto-height so LayoutRoot's `justify-center` drives
+          // the compact-card vertical centering. Same UX at every breakpoint.
+          !isChatLocked && "min-h-0 flex-1"
+        )}
+      >
         <div
           className={cn(
             "chat-shell-frame w-full",
@@ -208,8 +216,10 @@ export function ChatShell({ initialIsApiKeyVerified }: ChatShellProps) {
                 // primitive auto-adds `chat-shell-glass` for the rest of the
                 // glass styling.
                 "backdrop-blur-[20px]",
-                "gap-3 p-3 sm:gap-4 sm:p-4 md:p-6",
-                !isChatLocked && "min-h-[520px]"
+                "gap-3 p-3 sm:gap-4 sm:p-4 md:p-6"
+                // No min-h: Card adapts to frame's flex-allocated height at
+                // every breakpoint. Composer is always pinned to Card bottom;
+                // MessageList scrolls internally via its own flex-1 min-h-0.
               )}
             >
               <ConnectionStatusCard

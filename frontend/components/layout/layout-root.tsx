@@ -53,11 +53,15 @@ export function LayoutRoot({ initialIsApiKeyVerified, children }: LayoutRootProp
       <div
         data-layout-root
         className={cn(
-          "mx-auto flex w-full max-w-[1320px] flex-col gap-4 lg:h-full",
-          // Locked → whole content block centers vertically as a single group.
-          // Unlocked → DisclaimerWrapper pins the footer to viewport bottom
-          // via `lg:mt-auto`, so the chat shell expands at top.
-          isChatLocked && "lg:justify-center"
+          "mx-auto flex w-full max-w-[1320px] flex-1 flex-col gap-4",
+          // flex-1 fills <main> (which is now h-svh + flex flex-col at every
+          // breakpoint). Locked → justify-center vertically centers the
+          // content block when it fits; <main>'s overflow-y-auto handles
+          // shorter viewports where Hero + LockedKeyCard + Disclaimer exceed
+          // the viewport. Unlocked → no centering; the chat-shell <section>
+          // becomes flex-1 (see chat-shell.tsx) and grows to fill, pinning
+          // the composer to the bottom. Same UX at every breakpoint.
+          isChatLocked && "justify-center"
         )}
       >
         {children}
