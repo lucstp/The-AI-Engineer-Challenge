@@ -1,7 +1,8 @@
 import { type FormEvent, useCallback, useState, useTransition } from "react";
 
-import { clearVerifiedKeyAction, verifyOpenAiKeyAction } from "@/app/actions";
+import { clearVerifiedKeyAction } from "@/app/actions";
 import type { ChatMessage } from "@/lib/chat-types";
+import type { VerifyKeyResult } from "@/lib/data/auth";
 
 export type KeyFeedbackTone = "success" | "error" | "info";
 
@@ -74,7 +75,24 @@ export function useKeyLifecycle({
       setKeyFeedback(null);
       setKeyFeedbackTone(null);
       startKeyVerification(async () => {
-        const result = await verifyOpenAiKeyAction(apiKeyInput);
+        // POST /api/verify-key (route handler, not Server Action). Route
+        // handlers don't log request bodies, so the raw sk-... key stays
+        // out of dev-mode stdout. Server-action arg-logging was the leak
+        // this migration closes.
+        let result: VerifyKeyResult;
+        try {
+          const response = await fetch("/api/verify-key", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ key: apiKeyInput }),
+          });
+          result = (await response.json()) as VerifyKeyResult;
+        } catch {
+          result = {
+            ok: false,
+            message: "Network unreachable. Check your connection and try again.",
+          };
+        }
         setKeyFeedback(result.message);
         setKeyFeedbackTone(result.ok ? "success" : "error");
         if (result.ok) {

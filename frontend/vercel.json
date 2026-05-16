@@ -5,6 +5,9 @@
     "app/api/chat/route.ts": {
       "maxDuration": 60
     },
+    "app/api/verify-key/route.ts": {
+      "maxDuration": 10
+    },
     "app/api/csp-report/route.ts": {
       "maxDuration": 5
     },

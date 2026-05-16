@@ -1,33 +1,19 @@
 "use server";
 
-import { clearVerifiedKey, hasVerifiedKey, verifyAndStoreKey } from "@/lib/data/auth";
-import { verifyKeyInputSchema } from "@/lib/schemas";
+import { clearVerifiedKey, hasVerifiedKey } from "@/lib/data/auth";
 
 /**
  * Server Actions — the "use server" boundary callable from Client
- * Components. Each action validates client input via zod, delegates to
- * the `lib/data/auth` Data Access Layer, and returns a UI-facing DTO.
+ * Components. Each action delegates to the `lib/data/auth` Data Access
+ * Layer.
  *
- * VerifyKeyResult is intentionally defined here (not re-exported from
- * the DAL) — "use server" files require strict export shapes; defining
- * the type locally keeps the file boundary clean.
+ * The verify path used to live here as `verifyOpenAiKeyAction(rawKey)`.
+ * It was migrated to a route handler at `POST /api/verify-key` because
+ * Next.js logs Server Action arguments to the dev-mode (`pnpm dev`)
+ * terminal — a developer-class leak for the raw sk-... key. The `has`
+ * and `clear` actions stay here: they take no arguments, so no payload
+ * is ever logged.
  */
-
-export interface VerifyKeyResult {
-  ok: boolean;
-  message: string;
-}
-
-export async function verifyOpenAiKeyAction(rawKey: string): Promise<VerifyKeyResult> {
-  const parsed = verifyKeyInputSchema.safeParse(rawKey);
-  if (!parsed.success) {
-    return {
-      ok: false,
-      message: "Invalid key format. OpenAI keys usually start with 'sk-' and are longer.",
-    };
-  }
-  return verifyAndStoreKey(parsed.data);
-}
 
 /**
  * Server-side "is the user verified" check. Used by client components
