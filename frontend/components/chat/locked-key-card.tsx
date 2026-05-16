@@ -112,8 +112,9 @@ export function LockedKeyCard({
         <div className="locked-input-ring">
           <Button
             type="submit"
+            variant="ghost"
             disabled={isVerifyingKey || apiKeyInput.trim().length === 0}
-            className="locked-verify-btn h-12 w-full border-0 bg-slate-950 px-7 font-semibold text-base text-cyan-300 shadow-none hover:bg-slate-900 hover:text-cyan-200 disabled:opacity-90"
+            className="locked-verify-btn h-12 w-full border-0 px-7 font-bold text-base text-cyan-300 [text-shadow:0_1px_3px_rgba(0,0,0,0.6)] hover:text-cyan-200 disabled:opacity-90"
           >
             {isVerifyingKey ? "Verifying..." : "Verify key"}
           </Button>
