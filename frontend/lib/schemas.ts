@@ -60,6 +60,17 @@ export function isPlausibleOpenAiKey(value: string): boolean {
   return verifyKeyInputSchema.safeParse(value).success;
 }
 
+/**
+ * POST /api/verify-key body envelope. The route handler unwraps `key`
+ * and feeds the inner string to the existing `verifyKeyInputSchema`
+ * via composition — one source of truth for the sk-... key shape.
+ */
+export const verifyKeyRequestSchema = z.object({
+  key: verifyKeyInputSchema,
+});
+
+export type VerifyKeyRequest = z.infer<typeof verifyKeyRequestSchema>;
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Boundary — sessionStorage persisted chat UI state
 // ─────────────────────────────────────────────────────────────────────────────

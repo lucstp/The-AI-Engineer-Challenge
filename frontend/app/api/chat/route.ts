@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { isSameOrigin } from "@/lib/csrf";
 import { getVerifiedKey } from "@/lib/data/auth";
 import { serverEnv } from "@/lib/env";
 import { checkRateLimit, getClientKey } from "@/lib/rate-limit";
@@ -40,28 +41,6 @@ const COLDPLAY_SYSTEM_PROMPT = [
   "- Italicize emotional/descriptive phrases sparingly with *single asterisks*.\n",
   "- Do not use headings (#) inline — keep responses flowing prose + lists.",
 ].join("");
-
-/**
- * Same-origin guard (CSRF defense-in-depth). Server Actions get free CSRF
- * protection from Next.js; route handlers do not. Reject any POST whose
- * Origin header doesn't match the request URL host. Cookies might travel
- * cross-site even with sameSite=strict on browsers that don't honor it
- * correctly; this is belt + suspenders.
- *
- * Missing Origin (server-to-server probe / curl without --header Origin)
- * also fails closed — legitimate browsers always include Origin on POST.
- */
-function isSameOrigin(request: Request): boolean {
-  const origin = request.headers.get("origin");
-  if (!origin) {
-    return false;
-  }
-  try {
-    return new URL(origin).host === new URL(request.url).host;
-  } catch {
-    return false;
-  }
-}
 
 export async function POST(request: Request): Promise<Response> {
   const requestId = crypto.randomUUID();
