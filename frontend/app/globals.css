@@ -394,24 +394,11 @@
     border: 0;
   }
 
-  /* Conditional layout — `data-chat-locked` is set ON THE SAME ELEMENT
-     (`[data-layout-root]`) at SSR time from `app/page.tsx` so the locked
-     layout is correct on FIRST PAINT (no hydration race where the shell
-     briefly renders at the top then reflows to centered). ChatShell
-     syncs it on client state changes via the same attribute. Targeting
-     the element directly (not via `body`) avoids the prior boot-time
-     window when the body attribute hadn't yet been written.
-     Locked → flex column centers vertically as a single group.
-     Unlocked → disclaimer wrapper gets margin-top: auto to pin to
-     viewport bottom; chat shell expands to fill the upper area. */
-  @media (min-width: 1024px) {
-    [data-layout-root][data-chat-locked="false"] [data-disclaimer-wrapper] {
-      margin-top: auto;
-    }
-    [data-layout-root][data-chat-locked="true"] {
-      justify-content: center;
-    }
-  }
+  /* Conditional layout (locked centers, unlocked pins disclaimer to
+     bottom) now lives in `<LayoutRoot>` + `<DisclaimerWrapper>` via
+     React state + Tailwind `lg:justify-center` / `lg:mt-auto`. CSS
+     attribute selectors here would re-introduce the compiled-CSS-stale
+     fragility we just removed. */
 }
 
 /* ─────────────────────────────────────────────────────────────────────────
@@ -724,8 +711,8 @@
     inset 0 -1px 0 rgba(255, 255, 255, 0.04),
     0 30px 60px -20px rgba(2, 8, 28, 0.5),
     0 8px 24px -8px rgba(2, 8, 28, 0.3),
-    /* Tight white halo — the "lit edge" only, ~20px from the border */
-    0 0 22px rgba(255, 255, 255, 0.18),
+    /* Tight white halo — the "lit edge" only, ~20px from the border */ 0 0 22px
+    rgba(255, 255, 255, 0.18),
     /* Aurora glow — cyan inner ring → violet mid → fuchsia outermost.
        These now carry the visible spread the user perceives, not white. */
     0
@@ -907,11 +894,16 @@
       rgba(98, 34, 121, 0.74)
     ),
     rgba(9, 20, 61, 0.64);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.3),
-    0 0 24px rgba(125, 211, 252, 0.42),
-    0 0 50px rgba(167, 139, 250, 0.32),
-    0 0 90px rgba(217, 70, 239, 0.18);
+  /* Inset top-edge highlight only — the outer halo (24/50/90px
+     cyan/violet/fuchsia) was bleeding upward 90px into the message-list
+     area and reading as an unintended ambient glow above the composer.
+     The composer's visual signature is carried by its animated prism
+     interior fill (::before) and animated prism border ring (::after),
+     which stay below — those define the composer without an outward
+     bloom. Wider halo styling stays scoped to prompt-glass buttons,
+     where it belongs (tight `0 0 24px -8px` inset-style halo on the
+     interactive prompt cards). */
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3);
 
   /* Animated prism INTERIOR fill — same palette + cadence as the locked-state
      input. Sits between the dark base and the content. Straight alpha (no

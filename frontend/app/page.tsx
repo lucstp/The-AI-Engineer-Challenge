@@ -5,7 +5,9 @@ import { AuroraBackground } from "@/components/decoration/aurora-background";
 import { HeartDoodle } from "@/components/decoration/heart-doodle";
 import { LoveIsTheOnlyAnswer } from "@/components/decoration/love-is-the-only-answer";
 import { DisclaimerFooter } from "@/components/layout/disclaimer-footer";
+import { DisclaimerWrapper } from "@/components/layout/disclaimer-wrapper";
 import { Hero } from "@/components/layout/hero";
+import { LayoutRoot } from "@/components/layout/layout-root";
 import { isPlausibleOpenAiKey } from "@/lib/schemas";
 import { unseal } from "@/lib/session-crypto";
 
@@ -61,26 +63,22 @@ export default async function HomePage() {
 
       <AuroraBackground />
 
-      {/* Layout root — CSS in globals.css reads `[data-layout-root]
-          [data-chat-locked]` and switches flex behavior: locked →
-          justify-content: center (whole content block centers vertically);
-          unlocked → disclaimer wrapper gets mt-auto so the chat shell
-          expands at top and the footer pins to bottom. The attribute is
-          set HERE on the server so first paint matches final layout — no
-          hydration race where the shell briefly renders at the top then
-          reflows to center. ChatShell still syncs it on client state
-          changes (verify / disconnect). */}
-      <div
-        data-layout-root
-        data-chat-locked={initialIsApiKeyVerified ? "false" : "true"}
-        className="mx-auto flex w-full max-w-[1320px] flex-col gap-4 lg:h-full"
-      >
+      {/* Layout root + disclaimer wrapper are Client Components that own
+          the page-layout lock state via React state + Context. Initial
+          state is server-rendered from `initialIsApiKeyVerified`, so the
+          locked/unlocked flex layout is correct on first paint with no
+          hydration reflow and no dependency on a compiled CSS attribute
+          selector (the prior approach drifted whenever Turbopack's
+          incremental CSS compile fell behind the SSR markup). ChatShell
+          subscribes to the same context and propagates verify/disconnect
+          transitions through `useLockState().setIsChatLocked`. */}
+      <LayoutRoot initialIsApiKeyVerified={initialIsApiKeyVerified}>
         <Hero />
         <ChatShell initialIsApiKeyVerified={initialIsApiKeyVerified} />
-        <div data-disclaimer-wrapper>
+        <DisclaimerWrapper>
           <DisclaimerFooter />
-        </div>
-      </div>
+        </DisclaimerWrapper>
+      </LayoutRoot>
     </main>
   );
 }

@@ -22,8 +22,12 @@ export function DisclaimerFooter() {
           vocals, or copyrighted musical excerpts are used. Background music and sound effects are
           licensed from third-party royalty-free libraries and are not affiliated with Coldplay.
         </p>
-
-        <div className="gradient-hairline my-3 w-full max-w-[640px]" aria-hidden />
+        {/* Audio credits — flows directly after the disclaimer paragraph via
+            `gap-3` on the parent. The previous `gradient-hairline` divider
+            was removed because its `box-shadow: 0 0 16px ...` halo bled
+            upward into the page background where the disclaimer pins (no
+            dark glass to absorb it the way the chat-header context does)
+            and read as an unintended glowing-shadow seam. */}
         <p className="m-0 max-w-[824px] text-center text-[0.68rem] text-white/55 leading-relaxed [text-shadow:0_1px_2px_rgba(0,0,0,0.45)] sm:text-xs">
           <span className="font-bold text-cyan-200 uppercase tracking-[0.16em]">Audio Credits</span>
           <span className="mx-2 text-white/35">·</span>

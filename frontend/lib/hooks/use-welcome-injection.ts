@@ -19,10 +19,21 @@ interface UseWelcomeInjectionArgs {
 }
 
 /**
- * Re-injects an animated welcome message whenever validation succeeds AND
- * there is no user turn yet. Real conversations (with user messages)
- * persist as-is; a fresh validation always triggers the typewriter — even
- * if a stale static welcome was restored from sessionStorage.
+ * Injects an animated welcome message on FIRST validation of an EMPTY
+ * chat. If sessionStorage already restored ANY messages — a prior
+ * welcome (animate: false), a full conversation, anything — they are
+ * respected as-is, so a hard refresh of a verified session does NOT
+ * replay the typewriter.
+ *
+ * The prior "always re-inject if no user turn yet" rule caused a
+ * cascading flicker on refresh: restored welcome → replaced by fresh
+ * animating welcome → typewriter resets to "" → welcome height
+ * collapses → prompts + any other messages reflow up → typewriter
+ * fills back in → reflow back down. ~30ms visible flash on every
+ * descendant of MessageList. Respecting the restored array eliminates
+ * the cascade at its source. Forcing a fresh welcome after a content
+ * change is the storage-key version bump's job
+ * (`CHAT_UI_STATE_STORAGE_KEY` in `use-chat-persistence.ts`).
  */
 export function useWelcomeInjection({
   isApiKeyVerified,
@@ -62,8 +73,10 @@ export function useWelcomeInjection({
     });
 
     setMessages((prev) => {
-      const hasUserMessage = prev.some((message) => message.role === "user");
-      if (hasUserMessage) return prev;
+      // Respect anything already in the list — restored welcome (static),
+      // restored conversation, or both. Only inject when the chat is
+      // genuinely empty (first verify of a fresh session).
+      if (prev.length > 0) return prev;
       return [welcomeMessage];
     });
   }, [isApiKeyVerified, isRestoringChatState, setMessages]);

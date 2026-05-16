@@ -26,11 +26,14 @@ interface LockedKeyCardProps {
   keyFeedbackTone: KeyFeedbackTone | null;
   isSwappingPanel: boolean;
   /**
-   * True on the very first render only — gates `panel-enter` so the card
-   * is static on initial paint and only animates on the locked → verified
-   * transition (or back). Flipped by a post-mount `useState` in ChatShell.
+   * True only while this card is freshly mounted as the result of a
+   * locked ↔ verified TRANSITION (verify rejection, disconnect, etc.).
+   * False on initial paint (cold page load / refresh) so the card
+   * appears static — no entry animation, no opacity-0→1 flash. Owned
+   * by ChatShell via a set-state-during-render gate; cleared 260ms
+   * after the transition completes.
    */
-  isInitialPaint: boolean;
+  isEntering: boolean;
 }
 
 /**
@@ -49,7 +52,7 @@ export function LockedKeyCard({
   keyFeedback,
   keyFeedbackTone,
   isSwappingPanel,
-  isInitialPaint,
+  isEntering,
 }: LockedKeyCardProps) {
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     // Fire the audio kick-off synchronously inside the user-gesture frame
@@ -65,7 +68,7 @@ export function LockedKeyCard({
       aria-label="OpenAI key verification"
       className={cn(
         "flex flex-col items-center gap-3 px-2 py-2 text-center sm:gap-4 sm:py-4",
-        isSwappingPanel ? "panel-exit" : isInitialPaint ? null : "panel-enter"
+        isSwappingPanel ? "panel-exit" : isEntering ? "panel-enter" : null
       )}
     >
       <h2 className="m-0 bg-linear-to-r from-cyan-300 via-fuchsia-400 to-violet-400 bg-clip-text font-bold text-transparent text-xl leading-tight sm:text-2xl">
