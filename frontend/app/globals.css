@@ -467,6 +467,27 @@
   }
 }
 
+/* Bottom-LEFT rainbow — mirrors footer__bg-2-img (right) to form a
+   symmetric "butterfly wings" pair at the page bottom corners. The
+   shared Coldplay `bg-bottom-left.webp` asset naturally orients to the
+   left, so this utility renders it as-is (no scaleX). Uses a different
+   drift keyframe (`rainbow-drift-a`) than the right side for a livelier
+   asymmetric breathing motion. Width clamps mirror the right side's
+   responsive scale. */
+@utility footer__bg-img {
+  position: absolute;
+  display: block;
+  width: clamp(420px, 78vw, 1640px);
+  line-height: 0;
+  bottom: -8%;
+  left: -6%;
+  animation: rainbow-drift-a 12s ease-in-out infinite alternate;
+
+  @media (max-width: 640px) {
+    width: clamp(280px, 90vw, 520px);
+  }
+}
+
 @utility footer__bg-2-img {
   position: absolute;
   display: block;
