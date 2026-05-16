@@ -295,7 +295,7 @@
        flex-1 height when unlocked (see chat-shell.tsx). --shell-max-h-unlocked
        = 100svh is effectively uncapped — bounded only by <main>'s `h-svh`.
        Uniform across all breakpoints: same UX mobile → 2xl. */
-    --shell-h-locked: clamp(320px, 44svh, 380px);
+    --shell-h-locked: clamp(420px, 54svh, 460px);
     --shell-h-unlocked: 100%;
     --shell-max-h-unlocked: 100svh;
   }
@@ -689,8 +689,38 @@
    the Input uses) so the animated prism gradient border + height come from
    the wrapper. This class just establishes a stacking context for the
    button's interior surface. */
+/* Verify-key CTA inside `locked-input-ring`. Translucent dark glass that
+   lets the wrapper's rainbow gradient show through — same visual treatment
+   as the shadcn Input next to it (Input is `bg-transparent` so the wrapper
+   rainbow reads through fully). Button is darker (translucent slate) so the
+   bold cyan CTA text reads clearly without breaking the colorful family.
+   Layered:
+     1. translucent slate body (~50% — lets ~half the rainbow through)
+     2. backdrop-blur softens the rainbow underneath for text legibility
+     3. Apple Liquid Glass inset top sheen (1px white)
+     4. subtle inset edge (1px white at low alpha) for depth
+     5. soft cyan outer glow — same aurora-cyan family as chat-shell-glass
+   Hover deepens the cyan accents (border + glow) without darkening the bg. */
 @utility locked-verify-btn {
   position: relative;
+  background: linear-gradient(140deg, rgba(2, 6, 23, 0.55) 0%, rgba(2, 6, 23, 0.4) 100%);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.04),
+    0 0 18px rgba(125, 249, 255, 0.12);
+  transition:
+    background 200ms ease,
+    box-shadow 200ms ease;
+
+  &:hover {
+    background: linear-gradient(140deg, rgba(15, 23, 42, 0.55) 0%, rgba(2, 6, 23, 0.4) 100%);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.24),
+      inset 0 0 0 1px rgba(125, 249, 255, 0.2),
+      0 0 24px rgba(125, 249, 255, 0.24);
+  }
 }
 
 /* Outer chat shell: DARK glass — the content well. Light hero + bright aurora
