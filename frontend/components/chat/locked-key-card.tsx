@@ -66,6 +66,17 @@ export function LockedKeyCard({
   return (
     <section
       aria-label="OpenAI key verification"
+      // Fire the audio-unlock kick-off on the FIRST tap anywhere inside
+      // the locked card — not just on form submit. The `useSoundExperience`
+      // window listener handles desktop reliably, but on iOS Safari/Brave
+      // `touchstart` on an `<input type="password">` is preempted by the
+      // input's focus + virtual-keyboard handling and doesn't reach
+      // `window` listeners (especially with `{ passive: true }`). Direct
+      // `onPointerDown` here runs synchronously in the user-gesture frame,
+      // matching the path that already works for the Verify Key click
+      // (handleSubmit → onBeforeSubmit). Idempotent — sound.startCrowd's
+      // internal advancePhase guard skips after the first call.
+      onPointerDown={() => onBeforeSubmit?.()}
       className={cn(
         "flex flex-col items-center gap-3 px-2 py-2 text-center sm:gap-4 sm:py-4",
         isSwappingPanel ? "panel-exit" : isEntering ? "panel-enter" : null
