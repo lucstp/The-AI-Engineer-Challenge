@@ -66,7 +66,12 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body>
+      {/* Browser extensions (ColorZilla `cz-shortcut-listen`, 1Password,
+          Grammarly, dark-reader, etc.) inject `<body>` attributes between
+          SSR and hydration. suppressHydrationWarning silences ONLY the
+          attribute mismatch on this element — real React-tree drift in
+          the subtree still warns. */}
+      <body suppressHydrationWarning>
         {/* Skip-link: keyboard users tab to it first; visually hidden
             until focused. Targets the `id="main-content"` landmark on
             HomePage so the chat is reachable in one keystroke. */}
