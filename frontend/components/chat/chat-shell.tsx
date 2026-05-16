@@ -6,6 +6,7 @@ import { ChatPanel } from "@/components/chat/chat-panel";
 import { ConnectionStatusCard } from "@/components/chat/connection-status-card";
 import { LockedKeyCard } from "@/components/chat/locked-key-card";
 import { CrowdSilhouette } from "@/components/decoration/crowd-silhouette";
+import { useLockState } from "@/components/layout/layout-root";
 import { Card } from "@/components/ui/card";
 import { MovingBorder } from "@/components/ui/moving-border";
 import { completeAssistantAnimation } from "@/lib/chat-state";
@@ -59,28 +60,41 @@ export function ChatShell({ initialIsApiKeyVerified }: ChatShellProps) {
 
   const isChatLocked = !key.isApiKeyVerified;
 
-  // Sync chat-locked state to `[data-layout-root]` so CSS in globals.css
-  // flips page layout (centered when locked, top-anchored when unlocked).
-  // The attribute is ALSO set on the server in `app/page.tsx`, so first
-  // paint already has the correct layout — this effect only handles
-  // subsequent state changes (verify / disconnect).
+  // Propagate lock-state into <LayoutRoot> so its className updates
+  // declaratively. `setIsChatLocked` from React's useState is referen-
+  // tially stable, so this effect only re-runs when the lock state
+  // actually changes (verify / disconnect transitions).
+  const { setIsChatLocked } = useLockState();
   useEffect(() => {
-    const root = document.querySelector<HTMLElement>("[data-layout-root]");
-    if (root) {
-      root.dataset.chatLocked = isChatLocked ? "true" : "false";
-    }
-  }, [isChatLocked]);
+    setIsChatLocked(isChatLocked);
+  }, [isChatLocked, setIsChatLocked]);
 
-  // First-paint animation gate. Without it, `panel-enter` fires on the
-  // very first mount because `isSwappingPanel === false` is true both
-  // BEFORE any swap (initial mount) and AFTER one finishes. We only
-  // want the entry animation on the locked ↔ verified TRANSITION, so
-  // hold it off until after hydration.
-  const [hasMounted, setHasMounted] = useState(false);
+  // Entry-animation gate. `panel-enter` should fire ONLY when a panel
+  // mounts as the result of a locked ↔ verified TRANSITION, never on
+  // the very first render (refresh / cold load). The prior `hasMounted`
+  // approach failed because flipping a state flag from false→true via
+  // useEffect adds the class AFTER mount → CSS sees a class addition →
+  // animation fires post-mount → visible flash.
+  //
+  // The fix: detect the flip DURING render and call setEnteringPanel
+  // unconditionally on transition only. React discards the in-progress
+  // render and re-renders with the new state, so the newly-mounted
+  // panel carries `panel-enter` from frame 0 — no post-mount class
+  // addition, no animation flash. A 260ms timer clears the flag after
+  // the keyframe (220ms) completes so subsequent re-renders of the same
+  // panel instance don't keep the class indefinitely.
+  const previousLockStateRef = useRef(isChatLocked);
+  const [enteringPanel, setEnteringPanel] = useState<"locked" | "unlocked" | null>(null);
+  if (previousLockStateRef.current !== isChatLocked) {
+    previousLockStateRef.current = isChatLocked;
+    setEnteringPanel(isChatLocked ? "locked" : "unlocked");
+  }
   useEffect(() => {
-    setHasMounted(true);
-  }, []);
-  const isInitialPaint = !hasMounted;
+    if (enteringPanel === null) return;
+    const PANEL_ENTER_BUFFER_MS = 260;
+    const timer = window.setTimeout(() => setEnteringPanel(null), PANEL_ENTER_BUFFER_MS);
+    return () => window.clearTimeout(timer);
+  }, [enteringPanel]);
 
   // Ambient confetti — fireworks + side cannons cycle while the chat is
   // unlocked. Paused while locked, hidden tab, or `prefers-reduced-motion`.
@@ -121,6 +135,39 @@ export function ChatShell({ initialIsApiKeyVerified }: ChatShellProps) {
     isRestoringChatState: persistence.isRestoringChatState,
     setMessages: persistence.setMessages,
   });
+
+  // Music auto-start for the REFRESH-OF-VERIFIED-STATE path. The
+  // original music trigger lives in MessageList's `onAnimationDone`
+  // callback below — it fires when the welcome typewriter completes
+  // (2.2s after fresh verify). On refresh the welcome restores STATIC
+  // (animate: false, no typewriter, no `onAnimationDone`), so that
+  // path never fires → music never starts → user hears only crowd.
+  // This effect handles the refresh case: once verified + persistence
+  // restored + the first user gesture has advanced `sound.phase` away
+  // from "idle" (which is how the crowd gets unlocked), if no message
+  // is still typewriter-animating, start music. The latch
+  // `musicStartedRef` keeps it idempotent with the typewriter path —
+  // whichever fires first wins, the other no-ops.
+  const { phase: soundPhase, startMusic: soundStartMusic } = sound;
+  useEffect(() => {
+    if (!key.isApiKeyVerified) return;
+    if (persistence.isRestoringChatState) return;
+    if (musicStartedRef.current) return;
+    if (persistence.messages.length === 0) return;
+    if (soundPhase === "idle") return;
+    const hasAnimatingAssistantMessage = persistence.messages.some(
+      (message) => message.role === "assistant" && message.animate === true
+    );
+    if (hasAnimatingAssistantMessage) return;
+    musicStartedRef.current = true;
+    void soundStartMusic();
+  }, [
+    key.isApiKeyVerified,
+    persistence.isRestoringChatState,
+    persistence.messages,
+    soundPhase,
+    soundStartMusic,
+  ]);
 
   const shellBurst = useShellBurstFlash(isChatLocked);
 
@@ -194,7 +241,7 @@ export function ChatShell({ initialIsApiKeyVerified }: ChatShellProps) {
                     keyFeedback={key.keyFeedback}
                     keyFeedbackTone={key.keyFeedbackTone}
                     isSwappingPanel={key.isSwappingPanel}
-                    isInitialPaint={isInitialPaint}
+                    isEntering={enteringPanel === "locked"}
                   />
                 </div>
               ) : (
@@ -204,7 +251,7 @@ export function ChatShell({ initialIsApiKeyVerified }: ChatShellProps) {
                   isChatLocked={isChatLocked}
                   isRestoringChatState={persistence.isRestoringChatState}
                   isSwappingPanel={key.isSwappingPanel}
-                  isInitialPaint={isInitialPaint}
+                  isEntering={enteringPanel === "unlocked"}
                   errorMessage={streaming.errorMessage}
                   conversationContainerRef={persistence.conversationContainerRef}
                   endOfMessagesRef={persistence.endOfMessagesRef}

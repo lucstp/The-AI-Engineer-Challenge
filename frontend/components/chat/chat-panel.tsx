@@ -14,11 +14,15 @@ interface ChatPanelProps {
   isRestoringChatState: boolean;
   isSwappingPanel: boolean;
   /**
-   * True on the very first render only — gates `panel-enter` so the
-   * panel is static on initial paint and only animates on the verified
-   * ↔ locked transition. Flipped by a post-mount `useState` in ChatShell.
+   * True only while this panel is freshly mounted as the result of a
+   * locked ↔ verified TRANSITION. False on initial paint (cold page
+   * load / refresh of an already-verified session) so the panel
+   * appears static — no entry animation, no opacity-0→1 flash that
+   * would briefly hide the welcome text, prompts, and composer. Owned
+   * by ChatShell via a set-state-during-render gate; cleared 260ms
+   * after the transition completes.
    */
-  isInitialPaint: boolean;
+  isEntering: boolean;
   errorMessage: string | null;
   conversationContainerRef: RefObject<HTMLElement | null>;
   endOfMessagesRef: RefObject<HTMLDivElement | null>;
@@ -47,7 +51,7 @@ export function ChatPanel({
   isChatLocked,
   isRestoringChatState,
   isSwappingPanel,
-  isInitialPaint,
+  isEntering,
   errorMessage,
   conversationContainerRef,
   endOfMessagesRef,
@@ -65,42 +69,47 @@ export function ChatPanel({
     <div
       className={cn(
         "flex min-h-0 flex-1 flex-col gap-3 sm:gap-4",
-        isSwappingPanel ? "panel-exit" : isInitialPaint ? null : "panel-enter"
+        isSwappingPanel ? "panel-exit" : isEntering ? "panel-enter" : null
       )}
     >
-      {isRestoringChatState ? (
-        <section
-          ref={conversationContainerRef}
-          aria-live="polite"
-          aria-label="Conversation"
-          onScroll={(event) => {
-            onConversationScroll(event.currentTarget.scrollTop);
-          }}
-          className={cn(
-            "relative flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto rounded-xl p-3 sm:p-4",
-            "bg-transparent!"
-          )}
-        >
-          <div className="m-auto w-full max-w-[620px] p-4 text-center">
-            <p className="m-0 text-slate-100/90 text-sm">Restoring conversation...</p>
-          </div>
-          <div ref={endOfMessagesRef} aria-hidden />
-        </section>
-      ) : (
-        <MessageList
-          messages={messages}
-          isLoading={isLoading}
-          isLocked={isChatLocked}
-          errorMessage={errorMessage}
-          conversationContainerRef={conversationContainerRef}
-          onConversationScroll={onConversationScroll}
-          onAnimationDone={onAnimationDone}
-          onDismissError={onDismissError}
-          onRetryLastMessage={onRetryLastMessage}
-          onChooseExamplePrompt={onChooseExamplePrompt}
-          endOfMessagesRef={endOfMessagesRef}
-        />
-      )}
+      {/* Single persistent <section> across the restoring → restored
+          transition. Previously we rendered TWO different subtrees
+          (`<section>Restoring conversation...</section>` vs
+          `<MessageList>`), which React reconciled as unmount-then-mount
+          — producing a visible content swap and amplified by React
+          Strict Mode's dev-only mount→unmount→remount cycle into the
+          "messages and prompts disappear then reappear" flicker the
+          user reported. Passing `isRestoring` into MessageList lets the
+          outer DOM persist; only the inner content transitions from
+          null → populated. */}
+      <MessageList
+        messages={messages}
+        isLoading={isLoading}
+        isLocked={isChatLocked}
+        isRestoring={isRestoringChatState}
+        errorMessage={errorMessage}
+        conversationContainerRef={conversationContainerRef}
+        onConversationScroll={onConversationScroll}
+        onAnimationDone={onAnimationDone}
+        onDismissError={onDismissError}
+        onRetryLastMessage={onRetryLastMessage}
+        onChooseExamplePrompt={onChooseExamplePrompt}
+        endOfMessagesRef={endOfMessagesRef}
+      />
+
+      {/* Pond5 audio attribution — minimal-footprint, always-visible legal
+          credit. The bottom-of-page <DisclaimerFooter> contains the full
+          credit too, but on lg+ viewports the disclaimer is clipped below
+          the `lg:overflow-hidden` boundary on <main>, so a returning user
+          mid-chat would not be able to reach it. This line keeps the
+          Pond5 attribution accessible at all times during the chat
+          experience without competing with the conversation. Full
+          disclaimer text remains in DisclaimerFooter (locked state shows
+          it prominently; verified state will surface it via the modal
+          coming in Bug #1.7). */}
+      <p className="m-0 px-3 text-center text-[0.6rem] text-white/40 italic leading-tight [text-shadow:0_1px_2px_rgba(0,0,0,0.4)] sm:text-[0.65rem]">
+        Music: “Aerophonia” by TangerineMedia · Pond5
+      </p>
 
       <ChatComposer
         value={inputValue}
