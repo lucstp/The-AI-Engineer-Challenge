@@ -90,7 +90,7 @@ export function ChatComposer({
         // current at 2026) snaps textarea height to exactly content +
         // padding, eliminating any unused vertical space. The shell's own
         // min-height: 64px keeps the resting size comfortable.
-        className="composer-field max-h-36 min-h-0 resize-none rounded-none border-0 bg-transparent px-4 py-[1.05rem] text-[1.02rem] text-white shadow-none [field-sizing:content] placeholder:text-white/66 focus-visible:border-0 focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0"
+        className="composer-field max-h-36 min-h-0 resize-none rounded-none border-0 bg-transparent px-4 py-[1.05rem] text-[1.02rem] text-white shadow-none field-sizing-content placeholder:text-white/66 focus-visible:border-0 focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0"
       />
       <div className="composer-tools">
         {!isLoading ? (
@@ -107,10 +107,10 @@ export function ChatComposer({
         {isLoading ? (
           <Button
             type="button"
-            variant="destructive"
+            variant="ghost"
             onClick={onStop}
             aria-label="Stop current assistant response"
-            className="h-11 rounded-full px-5 shadow-[0_0_16px_rgba(244,63,94,0.48)]"
+            className="composer-stop h-11 rounded-full px-5 font-semibold text-base text-white hover:text-white"
           >
             Stop
           </Button>

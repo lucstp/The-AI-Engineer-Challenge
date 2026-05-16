@@ -7,6 +7,7 @@ import { LoveIsTheOnlyAnswer } from "@/components/decoration/love-is-the-only-an
 import { DisclaimerFooter } from "@/components/layout/disclaimer-footer";
 import { DisclaimerWrapper } from "@/components/layout/disclaimer-wrapper";
 import { Hero } from "@/components/layout/hero";
+import { HeroWrapper } from "@/components/layout/hero-wrapper";
 import { LayoutRoot } from "@/components/layout/layout-root";
 import { isPlausibleOpenAiKey } from "@/lib/schemas";
 import { unseal } from "@/lib/session-crypto";
@@ -36,8 +37,8 @@ export default async function HomePage() {
           scale with viewport width without ever overlapping or drifting
           to the screen corners. Shown at 2xl+ (>=1536px); below that the
           shell consumes too much horizontal real estate to fit them. */}
-      <LoveIsTheOnlyAnswer className="pointer-events-none absolute top-[18%] z-0 hidden w-[220px] opacity-90 2xl:block 2xl:right-[calc(50%+540px)] min-[1800px]:top-[22%] min-[1800px]:w-[260px]" />
-      <LoveIsTheOnlyAnswer className="pointer-events-none absolute top-1/2 z-0 hidden w-[220px] -translate-y-1/2 opacity-90 2xl:block 2xl:left-[calc(50%+540px)] min-[1800px]:w-[260px]" />
+      <LoveIsTheOnlyAnswer className="pointer-events-none absolute top-[18%] z-0 hidden w-60 opacity-90 2xl:block 2xl:right-[calc(50%+590px)] min-[1800px]:top-[22%] min-[1800px]:w-70" />
+      <LoveIsTheOnlyAnswer className="pointer-events-none absolute top-[48%] z-0 hidden w-60 -translate-y-1/2 opacity-90 2xl:block 2xl:left-[calc(50%+590px)] min-[1800px]:w-80" />
 
       {/* Heart doodles — ambient warmth, confined to the TOP HALF of the
           viewport so they never land ON the crowd silhouette (which fills
@@ -53,7 +54,7 @@ export default async function HomePage() {
       <HeartDoodle
         variant="red"
         size={40}
-        className="absolute top-[10%] left-[6%] z-10 hidden rotate-6 opacity-85 md:block"
+        className="absolute top-[10%] left-[6%] z-1 hidden rotate-6 opacity-85 lg:block"
       />
       <HeartDoodle
         variant="red"
@@ -73,7 +74,9 @@ export default async function HomePage() {
           subscribes to the same context and propagates verify/disconnect
           transitions through `useLockState().setIsChatLocked`. */}
       <LayoutRoot initialIsApiKeyVerified={initialIsApiKeyVerified}>
-        <Hero />
+        <HeroWrapper>
+          <Hero />
+        </HeroWrapper>
         <ChatShell initialIsApiKeyVerified={initialIsApiKeyVerified} />
         <DisclaimerWrapper>
           <DisclaimerFooter />

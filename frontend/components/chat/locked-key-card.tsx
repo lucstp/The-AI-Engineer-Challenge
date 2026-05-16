@@ -82,12 +82,12 @@ export function LockedKeyCard({
           it in the existing chrome family. Lives ABOVE the form so the
           user sees it before clicking Verify. */}
       <p className="mt-2 mb-2 inline-flex items-center gap-2 rounded-full border border-cyan-300/35 bg-cyan-300/8 px-4 py-1.5 font-medium text-yellow-200 text-sm shadow-[0_0_20px_rgba(125,249,255,0.18)] [text-shadow:0_1px_2px_rgba(0,0,0,0.45)] sm:mt-3 sm:mb-3 sm:gap-2.5 sm:px-5 sm:py-2 sm:text-base">
-        <Volume2 aria-hidden className="h-4 w-4 shrink-0 sm:h-[18px] sm:w-[18px]" />
+        <Volume2 aria-hidden className="h-4 w-4 shrink-0 sm:h-4.5 sm:w-4.5" />
         <span className="italic">Turn on your device sound for the full experience.</span>
       </p>
       <form
         onSubmit={handleSubmit}
-        className="grid w-full max-w-[560px] grid-cols-[1fr_auto] gap-2.5 sm:gap-3"
+        className="grid w-full max-w-140 grid-cols-1 gap-2.5 sm:grid-cols-[1fr_auto] sm:gap-3"
       >
         <Label htmlFor="openai-key" className="sr-only">
           OpenAI API key
@@ -113,7 +113,7 @@ export function LockedKeyCard({
           <Button
             type="submit"
             disabled={isVerifyingKey || apiKeyInput.trim().length === 0}
-            className="locked-verify-btn h-12 border-0 bg-slate-950/55 px-7 font-semibold text-base text-white shadow-none hover:bg-slate-950/70 hover:text-white disabled:opacity-65"
+            className="locked-verify-btn h-12 w-full border-0 bg-slate-950 px-7 font-semibold text-base text-cyan-300 shadow-none hover:bg-slate-900 hover:text-cyan-200 disabled:opacity-90"
           >
             {isVerifyingKey ? "Verifying..." : "Verify key"}
           </Button>
@@ -128,7 +128,7 @@ export function LockedKeyCard({
             keyFeedbackTone === "success"
               ? "text-emerald-200"
               : keyFeedbackTone === "error"
-                ? "text-rose-200"
+                ? "text-red-200 animate-pulse duration-400"
                 : "text-slate-100"
           )}
         >

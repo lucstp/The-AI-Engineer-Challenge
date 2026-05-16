@@ -97,20 +97,6 @@ export function ChatPanel({
         endOfMessagesRef={endOfMessagesRef}
       />
 
-      {/* Pond5 audio attribution — minimal-footprint, always-visible legal
-          credit. The bottom-of-page <DisclaimerFooter> contains the full
-          credit too, but on lg+ viewports the disclaimer is clipped below
-          the `lg:overflow-hidden` boundary on <main>, so a returning user
-          mid-chat would not be able to reach it. This line keeps the
-          Pond5 attribution accessible at all times during the chat
-          experience without competing with the conversation. Full
-          disclaimer text remains in DisclaimerFooter (locked state shows
-          it prominently; verified state will surface it via the modal
-          coming in Bug #1.7). */}
-      <p className="m-0 px-3 text-center text-[0.6rem] text-white/40 italic leading-tight [text-shadow:0_1px_2px_rgba(0,0,0,0.4)] sm:text-[0.65rem]">
-        Music: “Aerophonia” by TangerineMedia · Pond5
-      </p>
-
       <ChatComposer
         value={inputValue}
         isLoading={isLoading}
@@ -119,6 +105,16 @@ export function ChatPanel({
         onSubmit={onSubmitMessage}
         onStop={onStopRequest}
       />
+
+      {/* Pond5 audio attribution — minimal-footprint, always-visible legal
+          credit, rendered BELOW the composer so it reads as meta/footer
+          rather than competing with the primary action. The locked-state
+          <DisclaimerFooter> contains the full credit; this in-chat line
+          keeps the Pond5 attribution visible at all times during the
+          chat experience (license requirement). */}
+      <p className="m-0 px-3 text-center text-[0.6rem] text-white/40 italic leading-tight [text-shadow:0_1px_2px_rgba(0,0,0,0.4)] sm:text-[0.65rem]">
+        Music: “Aerophonia” by TangerineMedia · Pond5
+      </p>
     </div>
   );
 }
