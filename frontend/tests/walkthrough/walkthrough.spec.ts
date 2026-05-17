@@ -97,9 +97,7 @@ test.describe("chat-shell visual walkthrough", () => {
 
     // ── 06. After disconnect ─────────────────────────────────────────────
     await page.getByRole("button", { name: "Disconnect verified key" }).click();
-    await expect(
-      page.getByText("Secure key session cleared. Please verify a key to continue.")
-    ).toBeVisible();
+    await expect(page.getByText("Session cleared — verify a new key to continue.")).toBeVisible();
     // Allow panel-swap to settle.
     await page.waitForTimeout(400);
     await page.screenshot({

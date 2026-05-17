@@ -121,9 +121,7 @@ test("disconnect clears cookie-backed session state and client persistence", asy
 
   await page.getByRole("button", { name: "Disconnect verified key" }).click();
 
-  await expect(
-    page.getByText("Secure key session cleared. Please verify a key to continue.")
-  ).toBeVisible();
+  await expect(page.getByText("Session cleared — verify a new key to continue.")).toBeVisible();
   await expect(page.getByRole("region", { name: "OpenAI key verification" })).toBeVisible();
 
   await page.reload();

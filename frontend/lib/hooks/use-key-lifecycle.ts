@@ -129,7 +129,7 @@ export function useKeyLifecycle({
         setInputValue("");
         setApiKeyInput("");
         setIsApiKeyVerified(false);
-        setKeyFeedback("Secure key session cleared. Please verify a key to continue.");
+        setKeyFeedback("Session cleared — verify a new key to continue.");
         setKeyFeedbackTone("info");
         clearPersistedState();
         setIsSwappingPanel(false);
