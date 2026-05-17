@@ -12,10 +12,15 @@
  *   • Malformed Origin URL → false.
  *   • Origin host ≠ request URL host → false.
  *
- * Defense in depth — `sameSite: "strict"` on the session cookie already
- * blocks cross-site cookie carry on conformant browsers. This guard
- * closes the gap on non-conformant ones and on direct curl-style abuse
- * that doesn't go through a browser at all.
+ * Defense in depth — `sameSite: "lax"` on the session cookie already
+ * blocks the only CSRF vector that matters here (cross-site state-
+ * changing POST: cookie withheld on cross-site POST in `lax` mode just
+ * as in `strict`). This guard closes the gap on non-conformant
+ * browsers and on direct curl-style abuse that doesn't go through a
+ * browser at all. `lax` is chosen over `strict` because iOS WebKit
+ * over-applies `strict` to legitimate same-origin refreshes — see the
+ * comment on the cookie set in `lib/data/auth.ts` for the full
+ * rationale.
  */
 
 export function isSameOrigin(request: Request): boolean {

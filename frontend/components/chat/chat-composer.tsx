@@ -86,7 +86,7 @@ export function ChatComposer({
         // current at 2026) snaps textarea height to exactly content +
         // padding, eliminating any unused vertical space. The shell's own
         // min-height: 64px keeps the resting size comfortable.
-        className="composer-field max-h-36 min-h-0 resize-none rounded-none border-0 bg-transparent px-4 py-[1.05rem] text-[1.02rem] text-white shadow-none field-sizing-content placeholder:text-white/66 focus-visible:border-0 focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0"
+        className="composer-field field-sizing-content max-h-36 min-h-0 resize-none rounded-none border-0 bg-transparent px-4 py-[1.05rem] text-[1.02rem] text-white shadow-none placeholder:text-white/66 focus-visible:border-0 focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0"
       />
       <div className="composer-tools">
         {!isLoading ? (

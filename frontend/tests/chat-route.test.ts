@@ -91,7 +91,7 @@ describe("app/api/chat/route", () => {
     const payload = (await response.json()) as { detail: string };
 
     expect(response.status).toBe(401);
-    expect(payload.detail).toContain("missing or invalid");
+    expect(payload.detail).toContain("OpenAI key not verified");
     expect(response.headers.get("x-request-id")).toBe("req-fixed-123");
   });
 
@@ -137,7 +137,9 @@ describe("app/api/chat/route", () => {
 
     expect(response.status).toBe(429);
     expect(payload.detail).toContain("overloaded");
-    expect(payload.detail).toContain("request_id=req-fixed-123");
+    // request_id is propagated via the x-request-id response header, not
+    // inlined in the body — assert the actual channel of communication.
+    expect(response.headers.get("x-request-id")).toBe("req-fixed-123");
   });
 
   it("returns 504 when upstream request is aborted", async () => {

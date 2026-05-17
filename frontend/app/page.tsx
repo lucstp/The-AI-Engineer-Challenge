@@ -37,8 +37,8 @@ export default async function HomePage() {
           scale with viewport width without ever overlapping or drifting
           to the screen corners. Shown at 2xl+ (>=1536px); below that the
           shell consumes too much horizontal real estate to fit them. */}
-      <LoveIsTheOnlyAnswer className="pointer-events-none absolute top-[18%] z-0 hidden w-60 opacity-90 2xl:block 2xl:right-[calc(50%+590px)] min-[1800px]:top-[22%] min-[1800px]:w-70" />
-      <LoveIsTheOnlyAnswer className="pointer-events-none absolute top-[48%] z-0 hidden w-60 -translate-y-1/2 opacity-90 2xl:block 2xl:left-[calc(50%+590px)] min-[1800px]:w-80" />
+      <LoveIsTheOnlyAnswer className="pointer-events-none absolute top-[18%] z-0 hidden w-60 opacity-90 2xl:right-[calc(50%+590px)] 2xl:block min-[1800px]:top-[22%] min-[1800px]:w-70" />
+      <LoveIsTheOnlyAnswer className="pointer-events-none absolute top-[48%] z-0 hidden w-60 -translate-y-1/2 opacity-90 2xl:left-[calc(50%+590px)] 2xl:block min-[1800px]:w-80" />
 
       {/* Heart doodles — ambient warmth, confined to the TOP HALF of the
           viewport so they never land ON the crowd silhouette (which fills

@@ -45,7 +45,7 @@ test.describe("responsive audit", () => {
         value: KEY_COOKIE_VALUE,
         url: TEST_BASE_URL,
         httpOnly: true,
-        sameSite: "Strict",
+        sameSite: "Lax",
       },
     ]);
     await page.reload();
