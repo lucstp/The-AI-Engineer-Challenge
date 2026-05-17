@@ -36,10 +36,13 @@ export class AudioOrchestrator {
 
   // Crowd — Web Audio API (sample-accurate looping)
   private audioContext: AudioContext | null = null;
-  private crowdBuffer: AudioBuffer | null = null;
   private crowdSource: AudioBufferSourceNode | null = null;
   private crowdGain: GainNode | null = null;
-  private crowdLoadPromise: Promise<AudioBuffer> | null = null;
+
+  // Decoded-buffer cache keyed by source URL. Single source of truth for
+  // both crowd ambience and one-shot SFX (e.g. boo) — first call decodes,
+  // subsequent calls reuse the same Promise so concurrent loads dedupe.
+  private readonly bufferCache = new Map<string, Promise<AudioBuffer>>();
 
   // Fade tokens — keyed string so we can address Web Audio crowd + HTML music
   private readonly fades = new Map<"music" | "crowd", FadeToken | null>([
@@ -69,7 +72,7 @@ export class AudioOrchestrator {
 
     try {
       const ctx = await this.ensureAudioContext();
-      const buffer = await this.loadCrowdBuffer(ctx);
+      const buffer = await this.loadBuffer(ctx, SOUND_TRACKS.crowd.src);
 
       // Already running — just re-fade up (handles mute→unmute pattern).
       if (this.crowdSource !== null && this.crowdGain !== null) {
@@ -108,6 +111,52 @@ export class AudioOrchestrator {
     } catch {
       // Web Audio unavailable, buffer load failure, autoplay rejected —
       // surface silence rather than crash. Caller can't recover from here.
+      return;
+    }
+  }
+
+  /**
+   * Layer a one-shot booing reaction over the running crowd ambience.
+   * No-op if the audio context has not yet been unlocked by an earlier
+   * `startCrowd()` user-gesture call — playBoo is a layered effect, not
+   * a primary unlock path. Uses its own source + gain node so the crowd's
+   * envelope is unaffected (no ducking; intentional per UX decision).
+   * Idempotent under rapid retries — each invocation creates an
+   * independent graph that self-cleans on the source's `ended` event.
+   */
+  async playBoo(): Promise<void> {
+    if (this.destroyed) return;
+    const ctx = this.audioContext;
+    if (ctx === null || ctx.state === "suspended") return;
+
+    try {
+      const buffer = await this.loadBuffer(ctx, SOUND_TRACKS.boo.src);
+      if (this.destroyed) return;
+
+      const source = ctx.createBufferSource();
+      source.buffer = buffer;
+
+      const gain = ctx.createGain();
+      gain.gain.setValueAtTime(0, ctx.currentTime);
+      gain.gain.linearRampToValueAtTime(
+        SOUND_TRACKS.boo.targetVolume,
+        ctx.currentTime + SOUND_TRACKS.boo.fadeInMs / 1000
+      );
+
+      source.connect(gain);
+      gain.connect(ctx.destination);
+      source.start();
+
+      source.addEventListener("ended", () => {
+        try {
+          source.disconnect();
+          gain.disconnect();
+        } catch {
+          // Already disconnected by destroy() — fine.
+        }
+      });
+    } catch {
+      // Buffer load / decode failed or context lost — silence is fine.
       return;
     }
   }
@@ -231,17 +280,24 @@ export class AudioOrchestrator {
     return this.audioContext;
   }
 
-  private async loadCrowdBuffer(ctx: AudioContext): Promise<AudioBuffer> {
-    if (this.crowdBuffer !== null) return this.crowdBuffer;
-    if (this.crowdLoadPromise !== null) return this.crowdLoadPromise;
-    this.crowdLoadPromise = (async () => {
-      const response = await fetch(SOUND_TRACKS.crowd.src, { cache: "force-cache" });
-      const arrayBuffer = await response.arrayBuffer();
-      const buffer = await ctx.decodeAudioData(arrayBuffer);
-      this.crowdBuffer = buffer;
-      return buffer;
-    })();
-    return this.crowdLoadPromise;
+  /**
+   * Cached buffer loader. First call for a given `src` fetches + decodes;
+   * subsequent calls return the same Promise so concurrent callers share
+   * a single network + decode. Used by both `startCrowd` (looped ambience)
+   * and `playBoo` (one-shot SFX) — adding a new layered track is one
+   * entry in SOUND_TRACKS + one playback method, no new caching code.
+   */
+  private loadBuffer(ctx: AudioContext, src: string): Promise<AudioBuffer> {
+    let cached = this.bufferCache.get(src);
+    if (cached === undefined) {
+      cached = (async () => {
+        const response = await fetch(src, { cache: "force-cache" });
+        const arrayBuffer = await response.arrayBuffer();
+        return await ctx.decodeAudioData(arrayBuffer);
+      })();
+      this.bufferCache.set(src, cached);
+    }
+    return cached;
   }
 
   private teardownCrowdGraph(): void {

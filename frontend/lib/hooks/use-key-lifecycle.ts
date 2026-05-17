@@ -32,6 +32,13 @@ interface UseKeyLifecycleArgs {
    * are constructed (resolves the cyclic dep between key + streaming).
    */
   disconnectCleanupRef: React.RefObject<(() => void) | null>;
+  /**
+   * Optional side-effect fired the moment a verify-key call resolves
+   * with `ok: false` (credential rejection). Used to layer the crowd-
+   * booing reaction over the running ambience. Fires before any state
+   * settles so the audio lands in sync with the pulse-error message.
+   */
+  onInvalidKey?: () => void;
 }
 
 /**
@@ -46,6 +53,7 @@ export function useKeyLifecycle({
   setInputValue,
   clearPersistedState,
   disconnectCleanupRef,
+  onInvalidKey,
 }: UseKeyLifecycleArgs): KeyLifecycle {
   const [apiKeyInput, setApiKeyInput] = useState("");
   const [isApiKeyVerified, setIsApiKeyVerified] = useState(initialIsApiKeyVerified);
@@ -104,11 +112,12 @@ export function useKeyLifecycle({
           setIsApiKeyVerified(true);
           setIsSwappingPanel(false);
         } else {
+          onInvalidKey?.();
           setIsSwappingPanel(false);
         }
       });
     },
-    [apiKeyInput, isVerifyingKey, startKeyVerification]
+    [apiKeyInput, isVerifyingKey, onInvalidKey, startKeyVerification]
   );
 
   const disconnectVerifiedKey = useCallback(() => {
