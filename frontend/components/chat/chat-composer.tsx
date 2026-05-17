@@ -76,11 +76,7 @@ export function ChatComposer({
         value={value}
         onChange={(event) => onChange(event.target.value)}
         onKeyDown={handleKeyDown}
-        placeholder={
-          isDisabled
-            ? "Verify key above to begin"
-            : "Ask about Coldplay... (Enter to send, Shift+Enter for newline)"
-        }
+        placeholder={isDisabled ? "Verify key above to begin" : "Ask about Coldplay..."}
         rows={1}
         disabled={isLoading || isDisabled}
         // `min-h-0` overrides the base Textarea's min-h-[64px] which was
