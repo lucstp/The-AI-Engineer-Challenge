@@ -18,7 +18,7 @@ test.beforeEach(async ({ context, page }) => {
       value: KEY_COOKIE_VALUE,
       url: TEST_BASE_URL,
       httpOnly: true,
-      sameSite: "Strict",
+      sameSite: "Lax",
     },
   ]);
 

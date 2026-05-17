@@ -54,9 +54,19 @@ export async function verifyAndStoreKey(key: string): Promise<VerifyKeyResult> {
       cookieStore.set(OPENAI_API_KEY_COOKIE, seal(key), {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
-        // strict (not lax): cross-site navigation must NOT carry this
-        // key cookie. App is single-origin; strict has zero UX cost.
-        sameSite: "strict",
+        // lax (not strict): iOS Safari + Brave apply a stricter
+        // interpretation of `strict` than Chromium does — top-level
+        // refresh on a freshly-verified session can be classified as
+        // cross-site and the cookie is withheld, kicking the user back
+        // to the locked card. `lax` permits top-level same-site
+        // navigation (refresh, direct link, back button) while still
+        // blocking the only CSRF vector that matters here: cross-site
+        // POST. That vector is already double-guarded by the
+        // `isSameOrigin` check in /api/verify-key/route.ts and
+        // /api/chat/route.ts, so the net security delta vs strict is
+        // zero. Matches OWASP's modern default for httpOnly + secure
+        // session cookies.
+        sameSite: "lax",
         path: "/",
         maxAge: SESSION_TTL_SECONDS,
       });
