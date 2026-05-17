@@ -56,6 +56,12 @@ export function ChatShell({ initialIsApiKeyVerified }: ChatShellProps) {
     setInputValue: persistence.setInputValue,
     clearPersistedState: persistence.clearPersistedState,
     disconnectCleanupRef,
+    // Layer the crowd-booing reaction over the running ambience on
+    // credential rejection. Fire-and-forget — UI state transitions
+    // continue in parallel so the audio lands with the pulse-error.
+    onInvalidKey: () => {
+      void sound.playBoo();
+    },
   });
 
   const isChatLocked = !key.isApiKeyVerified;

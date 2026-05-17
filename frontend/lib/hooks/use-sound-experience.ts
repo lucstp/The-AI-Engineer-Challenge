@@ -31,6 +31,8 @@ export interface SoundExperience {
   startCrowd: () => Promise<void>;
   /** Move to phase "crowd-and-music" and (if enabled) start music. */
   startMusic: () => Promise<void>;
+  /** Layer a one-shot booing reaction over the running crowd ambience. No-op when sound is disabled or context not yet unlocked. */
+  playBoo: () => Promise<void>;
   /** Staggered fade-out (music first, then crowd 1.5s later). */
   stopAll: () => Promise<void>;
 }
@@ -109,6 +111,11 @@ export function useSoundExperience(): SoundExperience {
     await orchestratorRef.current?.stopAll();
   }, [advancePhase]);
 
+  const playBoo = useCallback(async () => {
+    if (!isEnabled) return;
+    await orchestratorRef.current?.playBoo();
+  }, [isEnabled]);
+
   // Auto-start crowd on the FIRST user gesture anywhere on the page.
   // Browser autoplay policy: `play()` only succeeds when a user-
   // initiated event is on the stack. The earliest such moment is the
@@ -164,6 +171,7 @@ export function useSoundExperience(): SoundExperience {
     toggleEnabled,
     startCrowd,
     startMusic,
+    playBoo,
     stopAll,
   };
 }

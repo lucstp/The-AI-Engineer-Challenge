@@ -24,6 +24,16 @@ export const SOUND_TRACKS = {
     loop: false,
     fadeInMs: 2500,
   },
+  // One-shot crowd reaction layered over the running crowd ambience on
+  // an invalid-key validation result. Played through its own gain node
+  // so it does not affect the crowd's envelope (no ducking — see
+  // architectural note in audio-orchestrator.ts).
+  boo: {
+    src: "/audio/crowd-booing.mp3",
+    targetVolume: 0.5,
+    loop: false,
+    fadeInMs: 400,
+  },
 } as const;
 
 export const FADE_OUT_MS = 1500;
