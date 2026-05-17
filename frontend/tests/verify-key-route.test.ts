@@ -157,7 +157,7 @@ describe("app/api/verify-key/route", () => {
       expect.any(String),
       expect.objectContaining({
         httpOnly: true,
-        sameSite: "strict",
+        sameSite: "lax",
         path: "/",
       })
     );

@@ -41,11 +41,11 @@ export function CrowdSilhouette({ isVisible }: CrowdSilhouetteProps) {
       )}
       style={{ zIndex: -1 }}
     >
-      <div className="animate-crowd-bob relative h-full w-full">
+      <div className="relative h-full w-full animate-crowd-bob">
         <img
           src="/concert-crowd.png"
           alt=""
-          className="animate-crowd-fade-a absolute inset-x-0 bottom-0 h-full w-full object-cover"
+          className="absolute inset-x-0 bottom-0 h-full w-full animate-crowd-fade-a object-cover"
           style={{ objectPosition: "50% 25%" }}
           loading="eager"
           decoding="async"
@@ -53,7 +53,7 @@ export function CrowdSilhouette({ isVisible }: CrowdSilhouetteProps) {
         <img
           src="/concert-crowd-2.png"
           alt=""
-          className="animate-crowd-fade-b absolute inset-x-0 bottom-0 h-full w-full object-cover"
+          className="absolute inset-x-0 bottom-0 h-full w-full animate-crowd-fade-b object-cover"
           style={{ objectPosition: "50% 25%" }}
           loading="eager"
           decoding="async"

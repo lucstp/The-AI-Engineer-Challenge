@@ -92,7 +92,7 @@ export function LockedKeyCard({
           immediately, while the aurora-pill / rounded-full vocabulary keeps
           it in the existing chrome family. Lives ABOVE the form so the
           user sees it before clicking Verify. */}
-      <p className="mt-2 mb-2 inline-flex items-center gap-2 rounded-full border border-cyan-300/35 bg-cyan-300/8 px-4 py-1.5 font-medium text-yellow-200 text-sm shadow-[0_0_20px_rgba(125,249,255,0.18)] [text-shadow:0_1px_2px_rgba(0,0,0,0.45)] sm:mt-3 sm:mb-3 sm:gap-2.5 sm:px-5 sm:py-2 sm:text-base">
+      <p className="mt-2 mb-2 inline-flex items-center gap-2 rounded-full border border-cyan-300/35 bg-cyan-300/8 px-4 py-1.5 font-medium text-sm text-yellow-200 shadow-[0_0_20px_rgba(125,249,255,0.18)] [text-shadow:0_1px_2px_rgba(0,0,0,0.45)] sm:mt-3 sm:mb-3 sm:gap-2.5 sm:px-5 sm:py-2 sm:text-base">
         <Volume2 aria-hidden className="h-4 w-4 shrink-0 sm:h-4.5 sm:w-4.5" />
         <span className="italic">Turn on sound for the full experience.</span>
       </p>
@@ -140,14 +140,14 @@ export function LockedKeyCard({
             keyFeedbackTone === "success"
               ? "text-emerald-200"
               : keyFeedbackTone === "error"
-                ? "text-red-300 animate-pulse duration-400"
+                ? "animate-pulse text-red-300 duration-400"
                 : "text-slate-100"
           )}
         >
           {keyFeedback}
         </p>
       ) : (
-        <p className="m-0 max-w-[44ch] text-lime-300 [text-shadow:0_0_10px_rgba(190,242,100,0.45)] text-xs italic leading-relaxed">
+        <p className="m-0 max-w-[44ch] text-lime-300 text-xs italic leading-relaxed [text-shadow:0_0_10px_rgba(190,242,100,0.45)]">
           Server-side validation. Never stored in browser.
         </p>
       )}
