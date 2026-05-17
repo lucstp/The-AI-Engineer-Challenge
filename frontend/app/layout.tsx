@@ -1,8 +1,28 @@
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import type { Metadata, Viewport } from "next";
+import { Geist, Geist_Mono } from "next/font/google";
 
 import "./globals.css";
+
+// Vercel's Geist Sans + Mono — self-hosted via next/font/google (build-time
+// download + subset, zero runtime CDN dep). `display: "swap"` shows the
+// system fallback immediately and swaps to Geist when ready — no FOIT, no
+// CLS from font-metric mismatch. The `variable` option injects the CSS
+// custom property onto <html>; Tailwind v4's @theme inline block in
+// globals.css maps it to --font-sans / --font-mono so every `font-sans` /
+// `font-mono` utility resolves to Geist.
+const geistSans = Geist({
+  subsets: ["latin"],
+  variable: "--font-geist-sans",
+  display: "swap",
+});
+
+const geistMono = Geist_Mono({
+  subsets: ["latin"],
+  variable: "--font-geist-mono",
+  display: "swap",
+});
 
 const SITE_NAME = "Coldplay AI Companion";
 const SITE_DESCRIPTION =
@@ -65,7 +85,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" className={`${geistSans.variable} ${geistMono.variable}`}>
       {/* Browser extensions (ColorZilla `cz-shortcut-listen`, 1Password,
           Grammarly, dark-reader, etc.) inject `<body>` attributes between
           SSR and hydration. suppressHydrationWarning silences ONLY the

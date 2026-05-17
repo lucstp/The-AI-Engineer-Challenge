@@ -2,6 +2,19 @@
 @import "tw-animate-css";
 
 /* ─────────────────────────────────────────────────────────────────────────
+   Font tokens — Geist Sans + Geist Mono wired to next/font/google variables
+   injected on <html> via app/layout.tsx. `@theme inline` substitutes these
+   into Tailwind's font-sans / font-mono utilities at build time, so every
+   `font-sans` / `font-mono` class anywhere in the app resolves to Geist.
+   The `inline` keyword keeps Tailwind from re-declaring the CSS variable
+   itself; the variable's runtime value is whatever next/font set on <html>.
+   ───────────────────────────────────────────────────────────────────────── */
+@theme inline {
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
    Design tokens — Tailwind v4 @theme directive.
 
    Color tokens auto-expose as Tailwind utilities (bg-bg-warm, text-aurora-cyan,
@@ -337,7 +350,9 @@
     margin: 0;
     padding: 0;
     min-height: 100%;
-    font-family: "Inter", "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    font-family:
+      var(--font-geist-sans), "Inter", "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial,
+      sans-serif;
     color: var(--color-text-primary);
     /* Cinematic vignette: daylight center where the hero + chat live, indigo
        deepening toward the edges. Aurora blobs add diffuse rainbow glow that
