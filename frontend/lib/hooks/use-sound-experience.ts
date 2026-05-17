@@ -27,6 +27,14 @@ export interface SoundExperience {
   phase: Phase;
   /** Toggle user preference. Fades out audio if muting, resumes if unmuting. */
   toggleEnabled: () => void;
+  /**
+   * Synchronously create + resume the AudioContext within a user-
+   * gesture event handler's synchronous body. Call BEFORE the async
+   * `startCrowd` to suppress Chrome's autoplay-policy informational
+   * warning (see audio-orchestrator.ts `unlockAudioContextSync` for
+   * the spec-compliance rationale). No-op when sound is disabled.
+   */
+  unlockAudioContextSync: () => void;
   /** Move to phase "crowd-only" and (if enabled) start crowd. MUST be called from a user-gesture handler. */
   startCrowd: () => Promise<void>;
   /** Move to phase "crowd-and-music" and (if enabled) start music. */
@@ -116,11 +124,22 @@ export function useSoundExperience(): SoundExperience {
     await orchestratorRef.current?.playBoo();
   }, [isEnabled]);
 
+  const unlockAudioContextSync = useCallback(() => {
+    if (!isEnabled) return;
+    orchestratorRef.current?.unlockAudioContextSync();
+  }, [isEnabled]);
+
   // Auto-start crowd on the FIRST user gesture anywhere on the page.
   // Browser autoplay policy: `play()` only succeeds when a user-
   // initiated event is on the stack. The earliest such moment is the
   // user's first pointerdown / keydown / touchstart — so we listen for
   // those and fire `startCrowd()` exactly once.
+  //
+  // Order matters inside the handler: `unlockAudioContextSync` runs
+  // on the synchronous call stack of the gesture handler so Chrome
+  // accepts the AudioContext construction as gesture-driven (suppresses
+  // the autoplay-policy informational log). Only THEN do we kick off
+  // the async `startCrowd` for the buffer-load + playback pipeline.
   //
   // Idempotent with the LockedKeyCard `onBeforeSubmit` path (Verify
   // click also calls startCrowd). If the Verify click *is* the first
@@ -134,6 +153,7 @@ export function useSoundExperience(): SoundExperience {
       if (triggered) return;
       triggered = true;
       removeListeners();
+      unlockAudioContextSync();
       void startCrowd();
     };
     const removeListeners = () => {
@@ -147,7 +167,7 @@ export function useSoundExperience(): SoundExperience {
     window.addEventListener("touchstart", handler, { passive: true });
 
     return removeListeners;
-  }, [startCrowd]);
+  }, [startCrowd, unlockAudioContextSync]);
 
   const toggleEnabled = useCallback(() => {
     setIsEnabled((current) => {
@@ -169,6 +189,7 @@ export function useSoundExperience(): SoundExperience {
     isEnabled,
     phase,
     toggleEnabled,
+    unlockAudioContextSync,
     startCrowd,
     startMusic,
     playBoo,

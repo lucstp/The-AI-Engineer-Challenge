@@ -247,9 +247,14 @@ export function ChatShell({ initialIsApiKeyVerified }: ChatShellProps) {
                     onApiKeyInputChange={key.handleApiKeyInputChange}
                     onSubmit={key.verifyApiKey}
                     // User-gesture audio unlock — fires synchronously inside
-                    // the form's submit handler so the browser accepts the
-                    // subsequent crowd.play().
+                    // the form's submit handler. unlockAudioContextSync runs
+                    // FIRST on the synchronous call stack of the gesture so
+                    // Chrome accepts the AudioContext construction as
+                    // gesture-driven (suppresses the autoplay-policy
+                    // informational log). The async startCrowd then handles
+                    // buffer-load + playback.
                     onBeforeSubmit={() => {
+                      sound.unlockAudioContextSync();
                       void sound.startCrowd();
                     }}
                     isVerifyingKey={key.isVerifyingKey}

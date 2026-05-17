@@ -62,10 +62,55 @@ export class AudioOrchestrator {
   }
 
   /**
-   * Begin (or resume) the crowd ambience. MUST be called inside a user
-   * gesture (Verify-key click) so AudioContext creation is allowed by
-   * the autoplay policy. Idempotent: a second call just re-fades to
-   * target volume without restarting the loop.
+   * Synchronously create and `resume()` the AudioContext within a user-
+   * gesture event handler. MUST be called from the synchronous body of
+   * a pointerdown / touchstart / keydown / click handler — any async
+   * function entry before this call (even an awaited call to another
+   * async function) shifts construction into a microtask that Chrome's
+   * autoplay-policy reporter does not trust as gesture-driven, emitting
+   * the "AudioContext was not allowed to start" informational log.
+   *
+   * Splitting the synchronous gesture-time unlock out of the async
+   * playback pipeline is the W3C autoplay-policy compliance pattern
+   * (spec §3.2.2: "the user agent should resume the AudioContext if
+   * sticky activation is present at construction"). Construction +
+   * resume happen on the synchronous call stack of the gesture handler,
+   * so Chrome verifies user activation and grants both without warning.
+   *
+   * Idempotent — second and subsequent calls are no-ops. After this
+   * returns, the async `startCrowd` / `playBoo` paths skip the lazy-
+   * init branch in `ensureAudioContext` and proceed straight to
+   * playback.
+   */
+  unlockAudioContextSync(): void {
+    if (this.destroyed) return;
+    if (this.audioContext !== null) return;
+
+    const Ctor: typeof AudioContext | undefined =
+      typeof window !== "undefined"
+        ? (window.AudioContext ??
+          (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext)
+        : undefined;
+    if (Ctor === undefined) return;
+
+    this.audioContext = new Ctor();
+    // Fire-and-forget resume. The call lands within the synchronous
+    // gesture frame so Chrome's transient-activation check passes; we
+    // don't await because callers of this method are themselves
+    // synchronous gesture handlers. The async `startCrowd` /
+    // `ensureAudioContext` paths re-check `state` and await as needed.
+    void this.audioContext.resume();
+  }
+
+  /**
+   * Begin (or resume) the crowd ambience. Pre-unlock via
+   * `unlockAudioContextSync()` from the synchronous gesture frame is
+   * the recommended caller pattern — it suppresses Chrome's
+   * informational autoplay warning. Calling this method on its own
+   * still works (the fallback path in `ensureAudioContext` lazily
+   * constructs the context), but Chrome may log the warning the first
+   * time. Idempotent: a second call just re-fades to target volume
+   * without restarting the loop.
    */
   async startCrowd(): Promise<void> {
     if (this.destroyed) return;
@@ -262,6 +307,17 @@ export class AudioOrchestrator {
   // Internals
   // ────────────────────────────────────────────────────────────────────
 
+  /**
+   * Async fallback for callers that did not pre-unlock via
+   * `unlockAudioContextSync()`. Constructing the AudioContext from
+   * inside this async function body may trigger Chrome's
+   * "AudioContext was not allowed to start" informational log on the
+   * first call — Chrome's autoplay reporter does not trust gesture-
+   * frame inheritance through async function entry. Prefer the sync
+   * unlock path from gesture handlers; this fallback keeps the
+   * orchestrator robust for any caller that wires `startCrowd`
+   * directly without pre-unlock.
+   */
   private async ensureAudioContext(): Promise<AudioContext> {
     if (this.audioContext === null) {
       const Ctor: typeof AudioContext | undefined =
