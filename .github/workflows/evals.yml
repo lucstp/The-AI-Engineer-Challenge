@@ -1,0 +1,67 @@
+name: Promptfoo evals
+
+# AI-behavior regression suite for the Coldplay AI Companion.
+#
+# Triggers — narrow on purpose to keep CI minutes + OpenAI bill bounded:
+#   1. Pull requests that touch the system prompt, the model allowlist,
+#      or the eval suite itself
+#   2. Manual `workflow_dispatch` from the Actions tab (any branch)
+#
+# Cost discipline: ~25 cases × 3 models ≈ 75 OpenAI calls per full run.
+# Promptfoo caches across runs — unchanged tests don't re-invoke OpenAI.
+
+on:
+  pull_request:
+    paths:
+      - "frontend/app/api/chat/route.ts"
+      - "frontend/lib/system-prompt.ts"
+      - "frontend/lib/constants.ts"
+      - "frontend/evals/**"
+      - ".github/workflows/evals.yml"
+  workflow_dispatch:
+
+# Reduces redundant runs on rapid pushes to a PR branch.
+concurrency:
+  group: evals-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  eval:
+    name: Run promptfoo regression suite
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.30.1
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: pnpm
+          cache-dependency-path: frontend/pnpm-lock.yaml
+
+      - name: Install dependencies
+        working-directory: frontend
+        run: pnpm install --frozen-lockfile
+
+      - name: Run promptfoo eval
+        working-directory: frontend
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        # Fail the job on any assertion failure. The summary at the end of
+        # the run lists which cases regressed; the artifact uploaded below
+        # contains the full JSON for local inspection in `promptfoo view`.
+        run: pnpm exec promptfoo eval --config evals/promptfoo.config.ts --no-progress-bar
+
+      - name: Upload eval results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: promptfoo-results-${{ github.run_id }}
+          path: frontend/.promptfoo/
+          retention-days: 30

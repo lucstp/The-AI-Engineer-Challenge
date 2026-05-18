@@ -399,6 +399,35 @@ Default vitest environment is `node` for fast server-side tests (route handlers,
 
 Example: [`tests/connection-status-card.test.tsx`](tests/connection-status-card.test.tsx) covers the status-dot color contract as a 4-case truth table (locked / error / both / verified-healthy). Same pattern unblocks every future component test.
 
+### AI-behavior regression suite (Promptfoo)
+
+Normal tests verify code; **[Promptfoo](https://www.promptfoo.dev/) verifies AI behavior**. Without an eval layer, a system-prompt regression — scope-lock weakening, markdown formatting drifting, prompt-injection slipping through — ships silently. For an LLM app, code coverage alone is not FAANG-grade.
+
+The suite at [`evals/promptfoo.config.ts`](evals/promptfoo.config.ts) runs 16 cases across five behavioral categories:
+
+| Category | What it asserts |
+|---|---|
+| **A. On-topic accuracy** (5 cases) | Factual Coldplay answers · markdown bold on proper nouns (`**Chris Martin**`) · numbered lists for sequences |
+| **B. Off-topic refusal** (4 cases) | Python / math / recipes / personal advice all redirect back to Coldplay; no leakage of off-topic content |
+| **C. Prompt-injection resistance** (3 cases) | *"Ignore previous instructions..."* · role-override · system-prompt leak attempts all rejected |
+| **D. Markdown formatting depth** (2 cases) | Bullet lists for non-sequential items · no inline `#` headings |
+| **E. Tone (LLM-as-judge)** (1 case) | Calm + supportive response on emotional prompts; song titles bolded |
+
+Every case runs against **all three production model tiers** — `gpt-5-mini` / `gpt-5` / `gpt-5.5` — so the side-by-side comparison in `promptfoo view` answers whether the dropdown's *Advanced* tier actually produces measurably better quality than *Fast* (a question 172 TypeScript tests cannot answer).
+
+**Run locally:**
+
+```bash
+cd frontend
+export OPENAI_API_KEY=sk-...
+pnpm eval         # ~75 OpenAI calls per full run, cache-aware
+pnpm eval:view    # local browser UI at http://localhost:15500
+```
+
+**Run in CI:** [`.github/workflows/evals.yml`](../.github/workflows/evals.yml) triggers on PRs that touch the system prompt, the model allowlist, or the eval suite itself — plus manual `workflow_dispatch`. Results upload as a 30-day artifact. **The workflow uses Promptfoo's local OSS CLI only — never `promptfoo.app`, never any external SaaS.**
+
+**Single source of truth:** the system prompt lives in [`lib/system-prompt.ts`](lib/system-prompt.ts). Both [`app/api/chat/route.ts`](app/api/chat/route.ts) (production) and the eval config import the same constant — the prompt cannot drift between production and the regression suite.
+
 Two opt-in visual configs:
 
 ```bash

@@ -12,6 +12,7 @@
       "components/**",
       "lib/**",
       "tests/**",
+      "evals/**",
       "*.ts",
       "*.tsx",
       "*.js",
@@ -21,6 +22,7 @@
       "!**/.next",
       "!**/dist",
       "!**/test-results",
+      "!**/.promptfoo",
       "!.pnpm-store",
       "!pnpm-lock.yaml"
     ]

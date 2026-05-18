@@ -10,6 +10,7 @@ import {
   openAiErrorResponseSchema,
   openAiStreamChunkSchema,
 } from "@/lib/schemas";
+import { COLDPLAY_SYSTEM_PROMPT } from "@/lib/system-prompt";
 
 export const runtime = "nodejs";
 
@@ -25,23 +26,6 @@ const MAX_REQUEST_BODY_BYTES = 8 * 1024;
 // newline could accumulate unbounded memory in the chunk buffer; this cap
 // tears the stream down before that happens.
 const MAX_SSE_BUFFER_BYTES = 64 * 1024;
-
-const COLDPLAY_SYSTEM_PROMPT = [
-  "You are a Coldplay-only assistant. Answer only questions about Coldplay, ",
-  "including members, albums, songs, tours, timelines, and related official ",
-  "context. If the user asks about non-Coldplay topics, politely refuse and ",
-  "redirect to Coldplay-focused help.\n\n",
-  "Formatting rules (always follow these):\n",
-  "- Use markdown. Wrap ALL proper nouns in **bold**: band names (Coldplay), ",
-  "member full names (Chris Martin, Jonny Buckland, Guy Berryman, Will Champion), ",
-  "song titles, album titles, tour names, EP names, label names, collaborator ",
-  "names, and venue names.\n",
-  "- Use numbered lists for sequences (members, timelines, chronological items).\n",
-  "- Use bullet lists for related non-sequential items.\n",
-  "- Keep paragraphs concise (2-3 sentences max where possible).\n",
-  "- Italicize emotional/descriptive phrases sparingly with *single asterisks*.\n",
-  "- Do not use headings (#) inline — keep responses flowing prose + lists.",
-].join("");
 
 export async function POST(request: Request): Promise<Response> {
   const requestId = crypto.randomUUID();
