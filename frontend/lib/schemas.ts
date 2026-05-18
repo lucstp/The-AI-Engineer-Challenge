@@ -99,17 +99,35 @@ export type PersistedChatUiState = z.infer<typeof persistedChatUiStateSchema>;
 // ─────────────────────────────────────────────────────────────────────────────
 
 export const openAiStreamChunkSchema = z.object({
-  choices: z
-    .array(
-      z.object({
-        delta: z
-          .object({
-            content: z.string().optional(),
-          })
-          .passthrough(),
-      })
-    )
-    .min(1),
+  // Optional fields — only present on certain chunks. The final chunk
+  // (when `stream_options.include_usage: true`) carries `usage` + empty
+  // `choices`; intermediate chunks carry content deltas with no usage.
+  // We surface these on the OTel span via GenAI semantic conventions.
+  model: z.string().optional(),
+  choices: z.array(
+    z.object({
+      delta: z
+        .object({
+          content: z.string().optional(),
+        })
+        .passthrough(),
+      finish_reason: z.string().nullable().optional(),
+    })
+  ),
+  usage: z
+    .object({
+      prompt_tokens: z.number().int().nonnegative(),
+      completion_tokens: z.number().int().nonnegative(),
+      total_tokens: z.number().int().nonnegative(),
+      completion_tokens_details: z
+        .object({
+          reasoning_tokens: z.number().int().nonnegative().optional(),
+        })
+        .passthrough()
+        .optional(),
+    })
+    .nullable()
+    .optional(),
 });
 
 export type OpenAiStreamChunk = z.infer<typeof openAiStreamChunkSchema>;
