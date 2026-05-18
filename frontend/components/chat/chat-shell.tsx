@@ -234,6 +234,7 @@ export function ChatShell({ initialIsApiKeyVerified }: ChatShellProps) {
                   Boolean(streaming.errorMessage) ||
                   (!key.isApiKeyVerified && key.keyFeedback !== null)
                 }
+                isLocked={isChatLocked}
                 onDisconnect={key.isApiKeyVerified ? key.disconnectVerifiedKey : undefined}
                 isDisconnecting={key.isDisconnecting}
                 isSoundEnabled={sound.isEnabled}
