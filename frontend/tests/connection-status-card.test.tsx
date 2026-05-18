@@ -6,6 +6,7 @@ import { render } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
 import { ConnectionStatusCard } from "@/components/chat/connection-status-card";
+import { TooltipProvider } from "@/components/ui/tooltip";
 
 /**
  * Locked-state status dot color contract.
@@ -21,14 +22,19 @@ import { ConnectionStatusCard } from "@/components/chat/connection-status-card";
  */
 
 function renderCard(opts: { hasError: boolean; isLocked: boolean }) {
+  // ConnectionStatusCard's Disconnect button is wrapped in a shadcn
+  // Tooltip; Tooltip primitives require a TooltipProvider ancestor (the
+  // real app provides this at the root layout). Mirror that in tests.
   return render(
-    <ConnectionStatusCard
-      statusText="Locked"
-      hasError={opts.hasError}
-      isLocked={opts.isLocked}
-      isSoundEnabled={true}
-      onToggleSound={() => {}}
-    />
+    <TooltipProvider>
+      <ConnectionStatusCard
+        statusText="Locked"
+        hasError={opts.hasError}
+        isLocked={opts.isLocked}
+        isSoundEnabled={true}
+        onToggleSound={() => {}}
+      />
+    </TooltipProvider>
   );
 }
 

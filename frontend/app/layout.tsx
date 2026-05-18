@@ -3,6 +3,8 @@ import { SpeedInsights } from "@vercel/speed-insights/next";
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 
+import { TooltipProvider } from "@/components/ui/tooltip";
+
 import "./globals.css";
 
 // Vercel's Geist Sans + Mono — self-hosted via next/font/google (build-time
@@ -101,7 +103,13 @@ export default function RootLayout({
         >
           Skip to main content
         </a>
-        {children}
+        {/* Root-level tooltip provider. delayDuration kept conservative so
+            tooltips don't pop on incidental hovers but appear quickly when
+            a user hovers with intent. Single provider for the whole tree
+            so descendant <Tooltip /> usages don't need their own. */}
+        <TooltipProvider delayDuration={250} skipDelayDuration={400}>
+          {children}
+        </TooltipProvider>
         {/* Vercel Speed Insights — Core Web Vitals (LCP, FID, CLS, INP,
             TTFB, FCP) reported to the Vercel project's Speed Insights
             tab. No-op when not running on Vercel; zero-config on Vercel
