@@ -130,24 +130,29 @@ describe("<MessageList />", () => {
     expect(within(article).getByText("My question")).toBeInTheDocument();
   });
 
-  it("renders an assistant message with the 'Coldplay AI' label and markdown content", () => {
+  // MessageList renders the markdown subtree via React.lazy + Suspense
+  // (chunk split to keep `react-markdown` + `remark-gfm` out of the
+  // initial JS bundle). In tests, that means the markdown DOM lands
+  // one microtask later than the synchronous fallback — `findBy*`
+  // queries await the hydration; `getBy*` would race the lazy load.
+  it("renders an assistant message with the 'Coldplay AI' label and markdown content", async () => {
     renderList({
       messages: [makeAssistant("**Chris Martin** is the lead vocalist.")],
     });
     const article = screen.getByRole("article", { name: /assistant message/i });
     expect(within(article).getByText("Coldplay AI")).toBeInTheDocument();
     // Bold markdown rendered as <strong> with the cyan-200 class.
-    const strong = within(article).getByText("Chris Martin");
+    const strong = await within(article).findByText("Chris Martin");
     expect(strong.tagName).toBe("STRONG");
   });
 
-  it("opens markdown links in a new tab with rel='noopener noreferrer'", () => {
+  it("opens markdown links in a new tab with rel='noopener noreferrer'", async () => {
     renderList({
       messages: [
         makeAssistant("Visit [the official site](https://example.com/coldplay) for more."),
       ],
     });
-    const link = screen.getByRole("link", { name: /the official site/i });
+    const link = await screen.findByRole("link", { name: /the official site/i });
     expect(link).toHaveAttribute("target", "_blank");
     expect(link).toHaveAttribute("rel", expect.stringMatching(/noopener/));
     expect(link).toHaveAttribute("rel", expect.stringMatching(/noreferrer/));

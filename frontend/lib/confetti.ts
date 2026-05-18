@@ -10,9 +10,39 @@
  * All functions are no-ops on the server (canvas-confetti requires `window`)
  * and when the user has `prefers-reduced-motion: reduce` set — confetti is
  * pure decoration and accessibility comes first.
+ *
+ * Lazy-load posture (per Next.js lazy-loading guide — "Loading External
+ * Libraries" section): the `canvas-confetti` package is ~8 KB gzipped and
+ * is only used on celebration events (key verify, message send). Static
+ * import would pull it into every page's initial JS bundle. Dynamic
+ * `import()` defers the download until the first call, then the module-
+ * level cache below ensures all subsequent calls reuse the resolved
+ * reference. Public API stays synchronous fire-and-forget — call sites
+ * never await.
  */
 
-import confetti from "canvas-confetti";
+// `canvas-confetti` uses CommonJS-style `export = confetti` plus a
+// `declare namespace` for sub-types. With esModuleInterop, the dynamic
+// `import()` returns an object with both a `.default` (the function) and
+// the namespace members spread on top. We import the type for the
+// callable from the static side and resolve it from `mod.default` (with
+// a fallback for bundlers that hoist the function to the module root).
+import type confettiTypeImport from "canvas-confetti";
+
+type ConfettiFn = typeof confettiTypeImport;
+
+let confettiPromise: Promise<ConfettiFn> | null = null;
+
+/**
+ * Returns the cached promise that resolves to the `confetti` callable.
+ * First call kicks off the dynamic chunk download; later calls reuse it.
+ * Returns `null` on the server (canvas-confetti requires `window`).
+ */
+function loadConfetti(): Promise<ConfettiFn> | null {
+  if (typeof window === "undefined") return null;
+  confettiPromise ??= import("canvas-confetti").then((mod) => (mod.default ?? mod) as ConfettiFn);
+  return confettiPromise;
+}
 
 /**
  * Coldplay vibrant palette — pulled from `@theme` tokens in globals.css
@@ -49,15 +79,17 @@ function randomInRange(min: number, max: number): number {
  */
 export function fireBasic(): void {
   if (!shouldFireConfetti()) return;
-  void confetti({
-    particleCount: 120,
-    spread: 72,
-    startVelocity: 38,
-    origin: { x: 0.5, y: 0.7 },
-    colors: COLDPLAY_COLORS,
-    ticks: 220,
-    zIndex: Z_INDEX,
-    scalar: 1.05,
+  void loadConfetti()?.then((confetti) => {
+    void confetti({
+      particleCount: 120,
+      spread: 72,
+      startVelocity: 38,
+      origin: { x: 0.5, y: 0.7 },
+      colors: COLDPLAY_COLORS,
+      ticks: 220,
+      zIndex: Z_INDEX,
+      scalar: 1.05,
+    });
   });
 }
 
@@ -69,16 +101,18 @@ export function fireBasic(): void {
  */
 export function fireRandomDirection(): void {
   if (!shouldFireConfetti()) return;
-  void confetti({
-    particleCount: 90,
-    angle: randomInRange(45, 135),
-    spread: 110,
-    startVelocity: 32,
-    origin: { x: randomInRange(0.25, 0.75), y: randomInRange(0.55, 0.75) },
-    colors: COLDPLAY_COLORS,
-    ticks: 200,
-    zIndex: Z_INDEX,
-    scalar: 0.95,
+  void loadConfetti()?.then((confetti) => {
+    void confetti({
+      particleCount: 90,
+      angle: randomInRange(45, 135),
+      spread: 110,
+      startVelocity: 32,
+      origin: { x: randomInRange(0.25, 0.75), y: randomInRange(0.55, 0.75) },
+      colors: COLDPLAY_COLORS,
+      ticks: 200,
+      zIndex: Z_INDEX,
+      scalar: 0.95,
+    });
   });
 }
 
@@ -88,35 +122,36 @@ export function fireRandomDirection(): void {
  */
 export function fireFireworks(): void {
   if (!shouldFireConfetti()) return;
+  void loadConfetti()?.then((confetti) => {
+    const duration = 5000;
+    const animationEnd = Date.now() + duration;
+    const defaults = {
+      startVelocity: 30,
+      spread: 360,
+      ticks: 60,
+      zIndex: Z_INDEX,
+      colors: COLDPLAY_COLORS,
+    };
 
-  const duration = 5000;
-  const animationEnd = Date.now() + duration;
-  const defaults = {
-    startVelocity: 30,
-    spread: 360,
-    ticks: 60,
-    zIndex: Z_INDEX,
-    colors: COLDPLAY_COLORS,
-  };
-
-  const interval = window.setInterval(() => {
-    const timeLeft = animationEnd - Date.now();
-    if (timeLeft <= 0) {
-      window.clearInterval(interval);
-      return;
-    }
-    const particleCount = 50 * (timeLeft / duration);
-    void confetti({
-      ...defaults,
-      particleCount,
-      origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 },
-    });
-    void confetti({
-      ...defaults,
-      particleCount,
-      origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 },
-    });
-  }, 250);
+    const interval = window.setInterval(() => {
+      const timeLeft = animationEnd - Date.now();
+      if (timeLeft <= 0) {
+        window.clearInterval(interval);
+        return;
+      }
+      const particleCount = 50 * (timeLeft / duration);
+      void confetti({
+        ...defaults,
+        particleCount,
+        origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 },
+      });
+      void confetti({
+        ...defaults,
+        particleCount,
+        origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 },
+      });
+    }, 250);
+  });
 }
 
 /**
@@ -125,33 +160,34 @@ export function fireFireworks(): void {
  */
 export function fireSideCannons(): void {
   if (!shouldFireConfetti()) return;
+  void loadConfetti()?.then((confetti) => {
+    const end = Date.now() + 3000;
+    const defaults = {
+      spread: 55,
+      ticks: 80,
+      zIndex: Z_INDEX,
+      colors: COLDPLAY_COLORS,
+      startVelocity: 45,
+    };
 
-  const end = Date.now() + 3000;
-  const defaults = {
-    spread: 55,
-    ticks: 80,
-    zIndex: Z_INDEX,
-    colors: COLDPLAY_COLORS,
-    startVelocity: 45,
-  };
-
-  const frame = () => {
-    if (Date.now() > end) return;
-    void confetti({
-      ...defaults,
-      particleCount: 3,
-      angle: 60,
-      origin: { x: 0, y: 0.7 },
-    });
-    void confetti({
-      ...defaults,
-      particleCount: 3,
-      angle: 120,
-      origin: { x: 1, y: 0.7 },
-    });
-    window.requestAnimationFrame(frame);
-  };
-  frame();
+    const frame = () => {
+      if (Date.now() > end) return;
+      void confetti({
+        ...defaults,
+        particleCount: 3,
+        angle: 60,
+        origin: { x: 0, y: 0.7 },
+      });
+      void confetti({
+        ...defaults,
+        particleCount: 3,
+        angle: 120,
+        origin: { x: 1, y: 0.7 },
+      });
+      window.requestAnimationFrame(frame);
+    };
+    frame();
+  });
 }
 
 /**
