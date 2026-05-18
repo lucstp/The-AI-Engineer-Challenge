@@ -17,13 +17,19 @@
     "test": "vitest",
     "test:run": "vitest run",
     "test:e2e": "playwright test",
+    "test:a11y": "playwright test --grep @a11y",
     "eval": "promptfoo eval --config evals/promptfoo.config.ts",
     "eval:view": "promptfoo view"
   },
   "pnpm": {
     "onlyBuiltDependencies": [
       "better-sqlite3"
-    ]
+    ],
+    "overrides": {
+      "@playwright/test": "1.60.0",
+      "playwright": "1.60.0",
+      "playwright-core": "1.60.0"
+    }
   },
   "dependencies": {
     "@opentelemetry/api": "^1.9.1",
@@ -53,9 +59,10 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.11.3",
     "@biomejs/biome": "2.4.15",
     "@next/bundle-analyzer": "^16.2.6",
-    "@playwright/test": "^1.59.1",
+    "@playwright/test": "^1.60.0",
     "@testing-library/dom": "^10.4.1",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",

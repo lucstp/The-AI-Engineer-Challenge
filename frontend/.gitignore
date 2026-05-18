@@ -34,5 +34,9 @@ pnpm-debug.log*
 # Test build output (Playwright runs against a prod build)
 .next-test/
 
+# Playwright artifacts from failed runs (traces, screenshots, videos)
+test-results/
+playwright-report/
+
 # Local-only dev assets (paid IP — Vercel Blob is the production source).
 private/
