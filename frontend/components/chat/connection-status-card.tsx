@@ -1,4 +1,5 @@
 import { SoundToggle } from "@/components/sound/sound-toggle";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 
 interface ConnectionStatusCardProps {
@@ -81,15 +82,20 @@ export function ConnectionStatusCard({
           <span className="truncate max-[480px]:sr-only">{statusText}</span>
         </div>
         {onDisconnect ? (
-          <button
-            type="button"
-            onClick={onDisconnect}
-            disabled={isDisconnecting}
-            className="inline-flex h-7 items-center rounded-full border border-white/22 bg-white/4 px-2.5 font-semibold text-[0.68rem] text-white/85 transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60 sm:h-8 sm:text-xs"
-            aria-label="Disconnect verified key"
-          >
-            {isDisconnecting ? "Disconnecting..." : "Disconnect"}
-          </button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                type="button"
+                onClick={onDisconnect}
+                disabled={isDisconnecting}
+                className="inline-flex h-7 items-center rounded-full border border-white/22 bg-white/4 px-2.5 font-semibold text-[0.68rem] text-white/85 transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60 sm:h-8 sm:text-xs"
+                aria-label="Disconnect verified key"
+              >
+                {isDisconnecting ? "Disconnecting..." : "Disconnect"}
+              </button>
+            </TooltipTrigger>
+            <TooltipContent>Clear API key and end session</TooltipContent>
+          </Tooltip>
         ) : null}
       </div>
     </header>

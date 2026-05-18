@@ -6,6 +6,7 @@ import type { FormEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 
 type KeyFeedbackTone = "success" | "error" | "info";
@@ -121,14 +122,19 @@ export function LockedKeyCard({
             The Button interior is darker translucent glass with white
             text for readability against the page. */}
         <div className="locked-input-ring">
-          <Button
-            type="submit"
-            variant="ghost"
-            disabled={isVerifyingKey || apiKeyInput.trim().length === 0}
-            className="locked-verify-btn h-12 w-full border-0 px-7 font-bold text-base text-cyan-300 [text-shadow:0_1px_3px_rgba(0,0,0,0.6)] hover:text-cyan-200 disabled:opacity-90"
-          >
-            {isVerifyingKey ? "Verifying..." : "Verify key"}
-          </Button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                type="submit"
+                variant="ghost"
+                disabled={isVerifyingKey || apiKeyInput.trim().length === 0}
+                className="locked-verify-btn h-12 w-full border-0 px-7 font-bold text-base text-cyan-300 [text-shadow:0_1px_3px_rgba(0,0,0,0.6)] hover:text-cyan-200 disabled:opacity-90"
+              >
+                {isVerifyingKey ? "Verifying..." : "Verify key"}
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Validate with OpenAI to unlock the chat</TooltipContent>
+          </Tooltip>
         </div>
       </form>
       {keyFeedback ? (

@@ -2,6 +2,8 @@
 
 import { Volume2, VolumeX } from "lucide-react";
 
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+
 interface SoundToggleProps {
   isEnabled: boolean;
   onToggle: () => void;
@@ -15,19 +17,23 @@ interface SoundToggleProps {
 export function SoundToggle({ isEnabled, onToggle }: SoundToggleProps) {
   const label = isEnabled ? "Mute ambient sound" : "Enable ambient sound";
   return (
-    <button
-      type="button"
-      onClick={onToggle}
-      aria-pressed={isEnabled}
-      aria-label={label}
-      title={label}
-      className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-white/22 bg-white/4 text-white/85 transition hover:bg-white/10 sm:h-8 sm:w-8"
-    >
-      {isEnabled ? (
-        <Volume2 aria-hidden className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-      ) : (
-        <VolumeX aria-hidden className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-      )}
-    </button>
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <button
+          type="button"
+          onClick={onToggle}
+          aria-pressed={isEnabled}
+          aria-label={label}
+          className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-white/22 bg-white/4 text-white/85 transition hover:bg-white/10 sm:h-8 sm:w-8"
+        >
+          {isEnabled ? (
+            <Volume2 aria-hidden className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+          ) : (
+            <VolumeX aria-hidden className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+          )}
+        </button>
+      </TooltipTrigger>
+      <TooltipContent>{label}</TooltipContent>
+    </Tooltip>
   );
 }

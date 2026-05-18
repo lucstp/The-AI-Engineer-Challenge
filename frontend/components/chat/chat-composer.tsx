@@ -4,6 +4,7 @@ import type { FormEvent, KeyboardEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { fireOnUserAction } from "@/lib/confetti";
 
 interface ChatComposerProps {
@@ -90,40 +91,54 @@ export function ChatComposer({
       />
       <div className="composer-tools">
         {!isLoading ? (
-          <button
-            type="button"
-            onClick={insertRandomPrompt}
-            aria-label="Generate random Coldplay prompt"
-            title="Generate random Coldplay prompt"
-            className="composer-magic"
-          >
-            <Sparkles className="h-4 w-4" />
-          </button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                type="button"
+                onClick={insertRandomPrompt}
+                aria-label="Generate random Coldplay prompt"
+                className="composer-magic"
+              >
+                <Sparkles className="h-4 w-4" />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent>Generate random Coldplay prompt</TooltipContent>
+          </Tooltip>
         ) : null}
         {isLoading ? (
-          <Button
-            type="button"
-            variant="ghost"
-            onClick={onStop}
-            aria-label="Stop current assistant response"
-            className="composer-stop h-11 rounded-full px-5 font-semibold text-base text-white hover:text-white"
-          >
-            Stop
-          </Button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={onStop}
+                aria-label="Stop current assistant response"
+                className="composer-stop h-11 rounded-full px-5 font-semibold text-base text-white hover:text-white"
+              >
+                Stop
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Stop streaming response</TooltipContent>
+          </Tooltip>
         ) : (
-          <Button
-            type="submit"
-            variant="ghost"
-            disabled={isDisabled || !value.trim()}
-            aria-label="Send message"
-            className="composer-send disabled:opacity-100 disabled:brightness-100"
-          >
-            <ArrowUp
-              strokeWidth={3.5}
-              className="text-white drop-shadow-[0_1px_2px_rgba(2,6,23,0.95)]"
-              style={{ width: 22, height: 22, flexShrink: 0 }}
-            />
-          </Button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                type="submit"
+                variant="ghost"
+                disabled={isDisabled || !value.trim()}
+                aria-label="Send message"
+                className="composer-send disabled:opacity-100 disabled:brightness-100"
+              >
+                <ArrowUp
+                  strokeWidth={3.5}
+                  className="text-white drop-shadow-[0_1px_2px_rgba(2,6,23,0.95)]"
+                  style={{ width: 22, height: 22, flexShrink: 0 }}
+                />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Send message (Enter)</TooltipContent>
+          </Tooltip>
         )}
       </div>
     </form>
