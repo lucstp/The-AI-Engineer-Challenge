@@ -50,12 +50,21 @@ export function proxy(request: NextRequest): NextResponse {
     "style-src 'self' 'unsafe-inline'",
     "img-src 'self' https: data: blob:",
     "font-src 'self' data:",
-    // `https://*.sentry.io` allows the browser SDK to POST captured
-    // errors to Sentry's regional ingest endpoint (e.g.
-    // `o4511…ingest.us.sentry.io`). Without this, every client-side
-    // error would itself trigger a CSP violation — silencing the very
-    // signal we're trying to capture.
-    "connect-src 'self' https://*.sentry.io",
+    // Sentry browser SDK posts to a deep subdomain — the ingest host
+    // looks like `o4511411649511424.ingest.us.sentry.io`, FOUR levels
+    // deep under `sentry.io`. CSP host wildcards (`*.sentry.io`) only
+    // match ONE subdomain level, so the original wildcard silently
+    // blocked every Sentry event. Match the actual ingest pattern
+    // explicitly. The second entry (without region) is a forward-
+    // compatible safety net for accounts in non-US regions.
+    "connect-src 'self' https://*.ingest.us.sentry.io https://*.ingest.sentry.io",
+    // Vercel preview deploys embed an iframe from `vercel.live` for
+    // the preview toolbar (comments/feedback overlay). Without an
+    // explicit `frame-src`, CSP falls back to `default-src 'self'`
+    // and blocks the iframe → preview deploys log a CSP violation on
+    // every load. Production deploys don't include the toolbar so
+    // this directive is preview-relevant only.
+    "frame-src 'self' https://vercel.live",
     "media-src 'self'",
     "frame-ancestors 'none'",
     "form-action 'self'",
