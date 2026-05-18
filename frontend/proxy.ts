@@ -50,7 +50,12 @@ export function proxy(request: NextRequest): NextResponse {
     "style-src 'self' 'unsafe-inline'",
     "img-src 'self' https: data: blob:",
     "font-src 'self' data:",
-    "connect-src 'self'",
+    // `https://*.sentry.io` allows the browser SDK to POST captured
+    // errors to Sentry's regional ingest endpoint (e.g.
+    // `o4511…ingest.us.sentry.io`). Without this, every client-side
+    // error would itself trigger a CSP violation — silencing the very
+    // signal we're trying to capture.
+    "connect-src 'self' https://*.sentry.io",
     "media-src 'self'",
     "frame-ancestors 'none'",
     "form-action 'self'",
