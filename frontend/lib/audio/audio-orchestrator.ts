@@ -153,9 +153,12 @@ export class AudioOrchestrator {
         SOUND_TRACKS.crowd.crowdEntryFadeMs,
         ctx
       );
-    } catch {
+    } catch (error) {
       // Web Audio unavailable, buffer load failure, autoplay rejected —
       // surface silence rather than crash. Caller can't recover from here.
+      // Log so the failure is debuggable rather than silently swallowed —
+      // a previous incident burned an hour because this path was opaque.
+      console.warn("[audio] startCrowd failed:", error);
       return;
     }
   }
@@ -200,8 +203,10 @@ export class AudioOrchestrator {
           // Already disconnected by destroy() — fine.
         }
       });
-    } catch {
-      // Buffer load / decode failed or context lost — silence is fine.
+    } catch (error) {
+      // Buffer load / decode failed or context lost — silence is fine, but
+      // log so a recurring failure is visible in dev tools instead of mute.
+      console.warn("[audio] playBoo failed:", error);
       return;
     }
   }
@@ -217,7 +222,11 @@ export class AudioOrchestrator {
       this.music.currentTime = 0;
       try {
         await this.music.play();
-      } catch {
+      } catch (error) {
+        // play() rejection (autoplay-blocked / network / 502 from
+        // /api/audio/aerophonia). Log so prod-music incidents surface
+        // in DevTools instead of resolving to opaque silence.
+        console.warn("[audio] music.play() rejected:", error);
         return;
       }
     }
@@ -283,7 +292,10 @@ export class AudioOrchestrator {
         await this.music.play();
         await this.fadeElement(this.music, SOUND_TRACKS.music.targetVolume, durationMs);
       }
-    } catch {
+    } catch (error) {
+      // resume() rejection (audio element released, autoplay-blocked
+      // post-unmute). Log so unmute failures are visible.
+      console.warn("[audio] resume failed:", error);
       return;
     }
   }

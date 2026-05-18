@@ -56,10 +56,16 @@ export default async function HomePage() {
         size={40}
         className="absolute top-[10%] left-[6%] z-1 hidden rotate-6 opacity-85 lg:block"
       />
+      {/* Position rationale: at md / lg the chat shell is essentially
+          full-width with only thin gutter — there's no off-shell horizontal
+          zone for a decoration. Hide there. At xl+ the shell is capped at
+          ~980px so the viewport gutters can host the doodle off-shell. The
+          earlier `top-[36%] right-[4%]` landed ON the chat-header at every
+          breakpoint, overlapping the Locked status pill. */}
       <HeartDoodle
         variant="red"
         size={32}
-        className="absolute top-[36%] right-[4%] z-10 hidden rotate-12 opacity-80 md:block"
+        className="absolute top-[20%] right-[2%] z-10 hidden rotate-12 opacity-80 xl:block 2xl:right-[1%]"
       />
 
       <AuroraBackground />
