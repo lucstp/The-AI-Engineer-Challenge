@@ -4,6 +4,12 @@ import { cn } from "@/lib/utils";
 interface ConnectionStatusCardProps {
   statusText: string;
   hasError: boolean;
+  /**
+   * Pre-validation state. Drives the status dot to red — locked means the
+   * chat is not yet usable (no verified key), semantically equivalent to
+   * "not ready." Green is reserved for verified + healthy.
+   */
+  isLocked: boolean;
   onDisconnect?: () => void;
   isDisconnecting?: boolean;
   /**
@@ -32,11 +38,16 @@ interface ConnectionStatusCardProps {
 export function ConnectionStatusCard({
   statusText,
   hasError,
+  isLocked,
   onDisconnect,
   isDisconnecting = false,
   isSoundEnabled,
   onToggleSound,
 }: ConnectionStatusCardProps) {
+  // Red covers both not-ready states (locked, pre-validation) AND error
+  // states (invalid key, OpenAI failure). Green is reserved for verified +
+  // healthy — the only state where the chat is actually usable.
+  const isNotReady = hasError || isLocked;
   return (
     <header className="chat-header">
       {/* Wordmark — both halves rendered in solid colors (not a gradient on
@@ -62,7 +73,7 @@ export function ConnectionStatusCard({
           <span
             className={cn(
               "h-2 w-2 shrink-0 rounded-full",
-              hasError
+              isNotReady
                 ? "bg-rose-400 shadow-[0_0_6px_rgba(251,113,133,0.7)]"
                 : "status-dot-live bg-emerald-300"
             )}
