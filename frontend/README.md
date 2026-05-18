@@ -13,7 +13,7 @@ That's the first thing the chat types out — three lines, one character at a ti
 A love letter to **Coldplay** wrapped in a security-hardened streaming chat. Built as the capstone of the [**AI Maker Space — AI Engineering Challenge**](https://github.com/AI-Maker-Space/The-AI-Engineer-Challenge). Non-commercial, educational fair use — the band is the subject of the project, not its sponsor.
 
 <p align="center">
-  <code>22/22 tests</code> · <code>0 lint warnings</code> · <code>W3C autoplay-policy §3.2.2 compliant</code> · <code>iOS parity verified</code> · <code>AES-256-GCM session crypto</code> · <code>per-request CSP nonces</code>
+  <code>29/29 tests</code> · <code>RTL + jsdom component tests</code> · <code>0 lint warnings</code> · <code>W3C autoplay-policy §3.2.2 compliant</code> · <code>iOS parity verified</code> · <code>AES-256-GCM session crypto</code> · <code>per-request CSP nonces</code>
 </p>
 
 <p align="center">
@@ -52,7 +52,7 @@ Most chat starters are 200 lines of "fetch → render." This one is closer to a 
 - A **three-layer audio experience** — royalty-free stadium crowd kicks in on your first tap; the licensed Pond5 *Aerophonia* track fades in after the welcome message types out; a one-shot `crowd-booing.mp3` lands over the crowd when a key fails validation, in sync with the pulse-red error
 - A **W3C autoplay-policy §3.2.2-compliant** `AudioContext` unlock — synchronous construction + resume inside the gesture frame, so Chrome's reporter accepts it without warning
 - A **cyan → violet → fuchsia** palette wrapped in `@theme` tokens, doodle hearts flanking the subtitle, a `prism-line` accent under the headline
-- Eight **focused hooks** that own all behavior, one per concern (`useChatPersistence`, `useChatStreaming`, `useKeyLifecycle`, `useChatScroll`, `useShellBurstFlash`, `useWelcomeInjection`, `useSoundExperience`, `useAmbientConfetti`)
+- Nine **focused hooks** that own all behavior, one per concern (`useChatPersistence`, `useChatStreaming`, `useKeyLifecycle`, `useChatScroll`, `useShellBurstFlash`, `useWelcomeInjection`, `useSoundExperience`, `useAmbientConfetti`, `useModelPreference`)
 - A **single zod source of truth** for runtime validation at every trust boundary
 - A security posture you could put in front of a code review: AES-256-GCM-sealed cookies, strict CSP with per-request nonces, sliding-window rate limit, same-origin guard, SSRF defense on the audio proxy, the full HTTP-header set
 
@@ -83,7 +83,7 @@ Formatting rules (always follow these):
 |---|---|
 | Framework | **Next.js 16** (App Router) on Node runtime |
 | Styling | **Tailwind v4** with `@theme` palette tokens + glass primitives in `globals.css` |
-| Components | **shadcn/ui** primitives + custom `MovingBorder` for the animated shell perimeter |
+| Components | **shadcn/ui** primitives — `Button`, `Card`, `Input`, `Label`, `Textarea`, `Select` (Radix), `Tooltip` (Radix) — + custom `MovingBorder` for the animated shell perimeter |
 | Markdown | **react-markdown** + **remark-gfm** for assistant message rendering |
 | Validation | **zod** at every trust boundary |
 | Lint / format | **biome v2** (one tool, runs in milliseconds, **0 warnings on `main`**) |
@@ -323,6 +323,38 @@ The **`bufferCache` Map** ([`lib/audio/audio-orchestrator.ts`](lib/audio/audio-o
 
 **`unlockAudioContextSync()`** is the W3C-compliant entry point. The window-level gesture listener AND the LockedKeyCard `onBeforeSubmit` both call it BEFORE the async `startCrowd()`. Construction and `resume()` land on the synchronous call stack of the gesture handler, satisfying Chrome's autoplay-policy reporter. The async pipeline (`loadBuffer` → `BufferSource` → `start()`) follows, by which time the context is already running.
 
+Every silent failure path in [`lib/audio/audio-orchestrator.ts`](lib/audio/audio-orchestrator.ts) (`startCrowd`, `playBoo`, `startMusic`, `resume`) now emits a `console.warn("[audio] <op> failed:", error)` before returning, so audio failures are debuggable in DevTools instead of resolving to opaque silence. The runtime contract is unchanged — failures still resolve to silence rather than crashing the chat — but the failure mode is observable.
+
+---
+
+## Model selector
+
+A persistent in-app model preference for the chat — three tiers, one zod-validated source of truth.
+
+| Tier | Model ID | maxCompletionTokens | Use case |
+|---|---|---|---|
+| **Fast** (default) | `gpt-5-mini` | 4000 | Quick responses for everyday tasks |
+| Balanced | `gpt-5` | 4000 | Best mix of speed, intelligence, and accuracy |
+| Advanced | `gpt-5.5` | 4000 | Strongest reasoning for coding, research, and complex tasks |
+
+**Single source of truth:** [`lib/constants.ts`](lib/constants.ts) — adding or removing a model is a one-place change. The zod allowlist in [`lib/schemas.ts`](lib/schemas.ts), the dropdown UI, and the per-model token cap on `/api/chat` all derive from this `MODELS` array.
+
+**Persistence (UI preference, not conversation data):** [`lib/hooks/use-model-preference.ts`](lib/hooks/use-model-preference.ts) stores the selected model in `localStorage` under `coldplay_model_preference_v1`. Three semantic storage tiers in this app, three different stores — credentials in an AES-256-GCM-sealed httpOnly cookie, conversation in sessionStorage (wiped on Disconnect), UI preference in localStorage (survives Disconnect). Defensive on hydrate: a tampered localStorage value fails `isModelId()` and falls back to `DEFAULT_MODEL` rather than poisoning the dropdown.
+
+**Server-side validation:** `/api/chat` validates the optional `model` field through `modelIdSchema` (zod enum derived from `MODELS`). An invalid model returns `400 Bad Request` at the same boundary that catches malformed `message` payloads. The route resolves the per-model token cap and applies `min(modelCap, OPENAI_MAX_COMPLETION_TOKENS)` so an operator can still cap globally via env override — per-model wins for runtime requests, env wins as a ceiling.
+
+**Retry semantics:** [`useChatStreaming`](lib/hooks/use-chat-streaming.ts) captures the `(message, model)` pair on every submission so Retry replays the exact original payload, even if the user has since changed their dropdown selection.
+
+**UI:** the selector trigger sits at the left of the composer-tools bar and is itself wrapped in a shadcn `Tooltip` so hovering surfaces the current model's name, id, and description without forcing a click.
+
+---
+
+## Tooltip system
+
+Every interactive control that warrants a hint is wrapped in a shadcn `Tooltip` (Radix-backed, glass-styled): the model selector trigger, SoundToggle, Sparkles prompt randomizer, Send, Stop, Disconnect, and Verify Key. Native `title=` attributes — which are inconsistent across browsers and a no-op on touch devices — were replaced with the accessible, keyboard-focusable, mobile-friendly equivalent. A single root `<TooltipProvider delayDuration={250}>` in [`app/layout.tsx`](app/layout.tsx) covers the whole tree.
+
+Self-explanatory text buttons (Retry, Dismiss, example prompts) and descriptive non-interactive copy (speaker pill, feedback line, status text) are intentionally left without tooltips — adding them there would be noise.
+
 ---
 
 ## Deploy to Vercel
@@ -354,12 +386,18 @@ Region pin (`iad1`) and per-function memory / duration live in [`vercel.json`](v
 ## Tests
 
 ```bash
-pnpm test:run                  # vitest, single-pass — currently 22/22 green
+pnpm test:run                  # vitest, single-pass — currently 29/29 green
 pnpm test                      # vitest, watch mode
 pnpm test:e2e                  # playwright on port 3010 against a prod build
 ```
 
 The e2e tests build into `.next-test/` (separate from your `.next/`) and run on port **3010**, so you can keep `pnpm dev` on 3000 while tests execute. `tests/global-setup.ts` pins a `TEST_SESSION_SECRET` so boot-time env validation passes without reusing your real production secret.
+
+### Component-test infrastructure
+
+Default vitest environment is `node` for fast server-side tests (route handlers, server actions, pure libs). **Component tests opt in to `jsdom`** via a `// @vitest-environment jsdom` pragma at file top — each test file picks the right environment without a separate config or runner. Render helpers wrap with `<TooltipProvider>` to mirror the real root layout. Stack: `@testing-library/react` + `@testing-library/jest-dom` + `jsdom`.
+
+Example: [`tests/connection-status-card.test.tsx`](tests/connection-status-card.test.tsx) covers the status-dot color contract as a 4-case truth table (locked / error / both / verified-healthy). Same pattern unblocks every future component test.
 
 Two opt-in visual configs:
 
@@ -442,25 +480,26 @@ frontend/
 │   ├── not-found.tsx           # custom brand-voice 404 page (same gradient + epigraphs)
 │   └── page.tsx                # server-side unseal + initial verified state
 ├── components/
-│   ├── chat/                   # the decomposed chat surface (shell, panel, composer, locked card, messages…)
+│   ├── chat/                   # the decomposed chat surface (shell, panel, composer, locked card, messages, model-selector…)
 │   ├── decoration/             # aurora, doodle hearts, crowd silhouette, "Love is the only answer"
 │   ├── layout/                 # hero, disclaimer footer, layout-root
 │   ├── sound/                  # speaker toggle pill
-│   └── ui/                     # shadcn primitives + moving-border
+│   └── ui/                     # shadcn primitives — button, card, input, label, textarea, select, tooltip, moving-border
 ├── lib/
 │   ├── audio/
 │   │   ├── audio-orchestrator.ts  # 3-layer orchestrator + unlockAudioContextSync + bufferCache
 │   │   └── tracks.ts              # SOUND_TRACKS config (crowd, music, boo)
-│   ├── chat-client.ts          # client-side streamChatMessage helper (calls /api/chat)
+│   ├── chat-client.ts          # client-side streamChatMessage helper (calls /api/chat) — forwards model
 │   ├── chat-state.ts           # message-array reducers (completeAssistantAnimation, etc.)
-│   ├── chat-types.ts           # ChatMessage type re-exports from schemas
+│   ├── chat-types.ts           # ChatMessage + ModelId type re-exports from schemas + constants
 │   ├── confetti.ts             # fireOnUserAction wrapper around canvas-confetti
+│   ├── constants.ts            # MODELS array — single source of truth for the model dropdown allowlist + per-model token caps
 │   ├── csrf.ts                 # isSameOrigin guard (lifted from inline)
 │   ├── data/auth.ts            # DAL: verifyAndStoreKey, getVerifiedKey, clearVerifiedKey
 │   ├── env.ts                  # boot-time env validation + SESSION_SECRET strength gate
-│   ├── hooks/                  # the eight feature hooks
+│   ├── hooks/                  # the nine feature hooks (incl. useModelPreference for the new dropdown)
 │   ├── rate-limit.ts           # Upstash + in-memory adapter (sliding window)
-│   ├── schemas.ts              # zod single source of truth
+│   ├── schemas.ts              # zod single source of truth (incl. modelIdSchema derived from MODELS)
 │   ├── session-crypto.ts       # AES-256-GCM seal/unseal
 │   └── utils.ts                # cn helper (clsx + tailwind-merge)
 ├── docs/
