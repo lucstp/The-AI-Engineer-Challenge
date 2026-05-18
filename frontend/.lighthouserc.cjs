@@ -32,6 +32,13 @@
  * fails → six console errors per audit).
  */
 
+// Absolute path resolution — lhci resolves `puppeteerScript` relative
+// to its CWD (the repo root when invoked from GitHub Actions), not
+// relative to this config file. Using `__dirname` keeps the config
+// self-contained and portable across invocation contexts (CI from
+// repo root, local from `frontend/`, etc.).
+const path = require("node:path");
+
 module.exports = {
   ci: {
     collect: {
@@ -40,7 +47,7 @@ module.exports = {
       // deployment origin so the audit itself can run without
       // attaching the bypass header to outbound cross-origin requests.
       // See `lighthouse-prepare.cjs` for the rationale.
-      puppeteerScript: "./lighthouse-prepare.cjs",
+      puppeteerScript: path.resolve(__dirname, "lighthouse-prepare.cjs"),
       settings: {
         // Desktop preset matches the primary surface for an LLM chat
         // app; mobile-first projects would flip to the mobile preset.
