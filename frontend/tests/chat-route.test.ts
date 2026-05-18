@@ -152,4 +152,53 @@ describe("app/api/chat/route", () => {
     expect(response.status).toBe(504);
     expect(payload.detail).toContain("timed out");
   });
+
+  it("forwards a valid allowlisted model to OpenAI with its per-model token cap", async () => {
+    cookiesMock.mockResolvedValue(createCookieStore(SEALED_VALID_KEY));
+    vi.mocked(fetch).mockResolvedValue(
+      createSseResponse(['data: {"choices":[{"delta":{"content":"Hi"}}]}\n\n', "data: [DONE]\n\n"])
+    );
+
+    const response = await POST(makeJsonRequest({ message: "Hello", model: "gpt-5" }));
+    expect(response.status).toBe(200);
+
+    // Assert the upstream call used the validated model + per-model cap.
+    const fetchCall = vi.mocked(fetch).mock.calls[0];
+    expect(fetchCall).toBeDefined();
+    const requestInit = fetchCall?.[1] as RequestInit | undefined;
+    expect(requestInit?.body).toBeTypeOf("string");
+    const body = JSON.parse(requestInit?.body as string) as {
+      model: string;
+      max_completion_tokens: number;
+    };
+    expect(body.model).toBe("gpt-5");
+    expect(body.max_completion_tokens).toBe(4000);
+  });
+
+  it("returns 400 for a model outside the allowlist (zod reject)", async () => {
+    cookiesMock.mockResolvedValue(createCookieStore(SEALED_VALID_KEY));
+
+    const response = await POST(makeJsonRequest({ message: "Hello", model: "gpt-3" }));
+    const payload = (await response.json()) as { detail: string };
+
+    expect(response.status).toBe(400);
+    expect(payload.detail).toMatch(/invalid|enum|model/i);
+  });
+
+  it("falls back to env's OPENAI_MODEL when request omits `model`", async () => {
+    cookiesMock.mockResolvedValue(createCookieStore(SEALED_VALID_KEY));
+    vi.mocked(fetch).mockResolvedValue(
+      createSseResponse(['data: {"choices":[{"delta":{"content":"Hi"}}]}\n\n', "data: [DONE]\n\n"])
+    );
+
+    const response = await POST(makeJsonRequest({ message: "Hello" }));
+    expect(response.status).toBe(200);
+
+    const fetchCall = vi.mocked(fetch).mock.calls[0];
+    const requestInit = fetchCall?.[1] as RequestInit | undefined;
+    const body = JSON.parse(requestInit?.body as string) as { model: string };
+    // tests/global-setup.ts leaves OPENAI_MODEL at its env schema default
+    // ("gpt-4.1-mini") — that fallback path keeps legacy/non-UI callers working.
+    expect(body.model).toBe("gpt-4.1-mini");
+  });
 });

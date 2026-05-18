@@ -4,7 +4,7 @@ import type { RefObject } from "react";
 
 import { ChatComposer } from "@/components/chat/chat-composer";
 import { MessageList } from "@/components/chat/message-list";
-import type { ChatMessage } from "@/lib/chat-types";
+import type { ChatMessage, ModelId } from "@/lib/chat-types";
 import { cn } from "@/lib/utils";
 
 interface ChatPanelProps {
@@ -13,6 +13,8 @@ interface ChatPanelProps {
   isChatLocked: boolean;
   isRestoringChatState: boolean;
   isSwappingPanel: boolean;
+  selectedModel: ModelId;
+  onModelChange: (modelId: ModelId) => void;
   /**
    * True only while this panel is freshly mounted as the result of a
    * locked ↔ verified TRANSITION. False on initial paint (cold page
@@ -51,6 +53,7 @@ export function ChatPanel({
   isChatLocked,
   isRestoringChatState,
   isSwappingPanel,
+  selectedModel,
   isEntering,
   errorMessage,
   conversationContainerRef,
@@ -64,6 +67,7 @@ export function ChatPanel({
   onInputChange,
   onSubmitMessage,
   onStopRequest,
+  onModelChange,
 }: ChatPanelProps) {
   return (
     <div
@@ -101,9 +105,11 @@ export function ChatPanel({
         value={inputValue}
         isLoading={isLoading}
         isDisabled={isChatLocked}
+        selectedModel={selectedModel}
         onChange={onInputChange}
         onSubmit={onSubmitMessage}
         onStop={onStopRequest}
+        onModelChange={onModelChange}
       />
 
       {/* Pond5 audio attribution — minimal-footprint, always-visible legal

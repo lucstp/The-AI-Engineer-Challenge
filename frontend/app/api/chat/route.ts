@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { MODELS } from "@/lib/constants";
 import { isSameOrigin } from "@/lib/csrf";
 import { getVerifiedKey } from "@/lib/data/auth";
 import { serverEnv } from "@/lib/env";
@@ -119,6 +120,16 @@ export async function POST(request: Request): Promise<Response> {
   const timeoutController = new AbortController();
   const timeoutHandle = setTimeout(() => timeoutController.abort(), OPENAI_TIMEOUT_MS);
 
+  // Resolve model + per-model token cap from the validated dropdown allowlist.
+  // Absent `parsed.data.model` falls back to env's OPENAI_MODEL (legacy direct-
+  // API callers + operator default). The env `OPENAI_MAX_COMPLETION_TOKENS`
+  // acts as a hard ceiling above the per-model cap so operators retain
+  // override authority: `min(model.cap, env)`.
+  const requestedModel = parsed.data.model ?? OPENAI_MODEL;
+  const modelConfig = MODELS.find((m) => m.id === requestedModel);
+  const modelCap = modelConfig?.maxCompletionTokens ?? OPENAI_MAX_TOKENS;
+  const effectiveCap = Math.min(modelCap, OPENAI_MAX_TOKENS);
+
   let upstream: Response;
   try {
     upstream = await fetch(OPENAI_CHAT_COMPLETIONS_ENDPOINT, {
@@ -128,13 +139,13 @@ export async function POST(request: Request): Promise<Response> {
         Authorization: `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
-        model: OPENAI_MODEL,
+        model: requestedModel,
         messages: [
           { role: "system", content: COLDPLAY_SYSTEM_PROMPT },
           { role: "user", content: parsed.data.message },
         ],
         stream: true,
-        max_completion_tokens: OPENAI_MAX_TOKENS,
+        max_completion_tokens: effectiveCap,
       }),
       signal: timeoutController.signal,
     });
