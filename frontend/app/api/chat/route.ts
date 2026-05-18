@@ -1,9 +1,11 @@
+import { SpanStatusCode, trace } from "@opentelemetry/api";
 import { NextResponse } from "next/server";
 
 import { MODELS } from "@/lib/constants";
 import { isSameOrigin } from "@/lib/csrf";
 import { getVerifiedKey } from "@/lib/data/auth";
 import { serverEnv } from "@/lib/env";
+import { computeChatCostUsd } from "@/lib/llm-pricing";
 import { checkRateLimit, getClientKey } from "@/lib/rate-limit";
 import {
   chatRequestSchema,
@@ -11,6 +13,14 @@ import {
   openAiStreamChunkSchema,
 } from "@/lib/schemas";
 import { COLDPLAY_SYSTEM_PROMPT } from "@/lib/system-prompt";
+
+// OTel tracer for the OpenAI chat operation. The Vercel-wired SDK
+// (see `instrumentation.ts`) auto-instruments the outbound `fetch` —
+// this manual span exists to carry GenAI semantic-convention attributes
+// the fetch-instrumentation does not know about (model, token usage,
+// cost, finish reason). See OTel GenAI semantic conventions:
+// https://opentelemetry.io/docs/specs/semconv/gen-ai/
+const tracer = trace.getTracer("ai-engineer-challenge.chat");
 
 export const runtime = "nodejs";
 
@@ -114,6 +124,26 @@ export async function POST(request: Request): Promise<Response> {
   const modelCap = modelConfig?.maxCompletionTokens ?? OPENAI_MAX_TOKENS;
   const effectiveCap = Math.min(modelCap, OPENAI_MAX_TOKENS);
 
+  // Start the OTel span for the OpenAI operation. Initial attributes
+  // follow GenAI semantic conventions; the response attributes
+  // (token usage, finish reason, cost) get populated when the stream
+  // completes. The span MUST be ended on every exit path — we'd leak
+  // an open span otherwise, which silently inflates trace counts in
+  // dashboards and prevents flush-on-shutdown from completing.
+  const span = tracer.startSpan("openai.chat.completions", {
+    attributes: {
+      "gen_ai.system": "openai",
+      "gen_ai.operation.name": "chat",
+      "gen_ai.request.model": requestedModel,
+      "gen_ai.request.max_tokens": effectiveCap,
+      "gen_ai.request.streaming": true,
+      // Non-standard: client correlation key. Surfaces the same
+      // `x-request-id` returned to the browser in the trace so we can
+      // pivot from a frontend error toast to its server-side span.
+      "ai_engineer_challenge.request_id": requestId,
+    },
+  });
+
   let upstream: Response;
   try {
     upstream = await fetch(OPENAI_CHAT_COMPLETIONS_ENDPOINT, {
@@ -129,13 +159,24 @@ export async function POST(request: Request): Promise<Response> {
           { role: "user", content: parsed.data.message },
         ],
         stream: true,
+        // Required for the final usage chunk OpenAI emits at stream
+        // end (empty `choices`, populated `usage`). Without this flag
+        // we can't emit `gen_ai.usage.*` attributes.
+        stream_options: { include_usage: true },
         max_completion_tokens: effectiveCap,
       }),
       signal: timeoutController.signal,
     });
   } catch (error) {
     clearTimeout(timeoutHandle);
-    if (error instanceof DOMException && error.name === "AbortError") {
+    const isTimeout = error instanceof DOMException && error.name === "AbortError";
+    span.recordException(error instanceof Error ? error : new Error(String(error)));
+    span.setStatus({
+      code: SpanStatusCode.ERROR,
+      message: isTimeout ? "openai_fetch_timeout" : "openai_fetch_failed",
+    });
+    span.end();
+    if (isTimeout) {
       return NextResponse.json(
         { detail: "Upstream OpenAI request timed out." },
         { status: 504, headers: { "x-request-id": requestId } }
@@ -160,6 +201,9 @@ export async function POST(request: Request): Promise<Response> {
     } catch {
       // ignore unparseable upstream error body
     }
+    span.setAttribute("http.response.status_code", upstream.status);
+    span.setStatus({ code: SpanStatusCode.ERROR, message: "openai_non_2xx" });
+    span.end();
     return NextResponse.json(
       { detail },
       { status: upstream.status, headers: { "x-request-id": requestId } }
@@ -167,6 +211,8 @@ export async function POST(request: Request): Promise<Response> {
   }
 
   if (!upstream.body) {
+    span.setStatus({ code: SpanStatusCode.ERROR, message: "openai_no_body" });
+    span.end();
     return NextResponse.json(
       { detail: "Upstream returned no stream body." },
       { status: 502, headers: { "x-request-id": requestId } }
@@ -188,6 +234,16 @@ export async function POST(request: Request): Promise<Response> {
       const encoder = new TextEncoder();
       let buffer = "";
 
+      // Captured for the OTel span at stream end. Populated from
+      // validated chunks as they arrive; nullable so we can omit the
+      // corresponding attribute when OpenAI doesn't return that field.
+      let responseModel: string | undefined;
+      let finishReason: string | undefined;
+      let inputTokens: number | undefined;
+      let outputTokens: number | undefined;
+      let reasoningTokens: number | undefined;
+      let streamErrored = false;
+
       try {
         while (true) {
           const { done, value } = await reader.read();
@@ -202,6 +258,7 @@ export async function POST(request: Request): Promise<Response> {
           if (buffer.length > MAX_SSE_BUFFER_BYTES) {
             // Defense against an upstream that streams without newlines —
             // unbounded buffer growth would leak memory. Tear it down.
+            streamErrored = true;
             controller.error(new Error("Upstream SSE buffer exceeded cap"));
             return;
           }
@@ -224,6 +281,23 @@ export async function POST(request: Request): Promise<Response> {
               if (typeof content === "string" && content.length > 0) {
                 controller.enqueue(encoder.encode(content));
               }
+              // GenAI semantic-convention bookkeeping. The response
+              // model may differ from the request model when OpenAI
+              // routes the request to a versioned snapshot
+              // (e.g. `gpt-5-mini-2026-01-01`). The final usage chunk
+              // arrives with empty `choices` + populated `usage`.
+              if (chunk.model && !responseModel) {
+                responseModel = chunk.model;
+              }
+              const chunkFinishReason = chunk.choices[0]?.finish_reason;
+              if (typeof chunkFinishReason === "string") {
+                finishReason = chunkFinishReason;
+              }
+              if (chunk.usage) {
+                inputTokens = chunk.usage.prompt_tokens;
+                outputTokens = chunk.usage.completion_tokens;
+                reasoningTokens = chunk.usage.completion_tokens_details?.reasoning_tokens;
+              }
             } catch {
               // Malformed/unsupported chunk shape — skip rather than tear
               // down the whole stream for the user.
@@ -231,9 +305,51 @@ export async function POST(request: Request): Promise<Response> {
           }
         }
       } catch (error) {
+        streamErrored = true;
+        span.recordException(error instanceof Error ? error : new Error(String(error)));
+        span.setStatus({ code: SpanStatusCode.ERROR, message: "stream_processing_failed" });
         controller.error(error);
         return;
       } finally {
+        // Finalize the OTel span with whatever GenAI attributes we
+        // captured. Set BEFORE end(); attributes added after end() are
+        // dropped silently by the SDK. The span outlives the Response
+        // return because we hold the ref in this closure.
+        if (responseModel) {
+          span.setAttribute("gen_ai.response.model", responseModel);
+        }
+        if (finishReason) {
+          // GenAI spec models finish reasons as an array (one per
+          // choice). Streaming chat completion has one choice.
+          span.setAttribute("gen_ai.response.finish_reasons", [finishReason]);
+        }
+        if (inputTokens !== undefined) {
+          span.setAttribute("gen_ai.usage.input_tokens", inputTokens);
+        }
+        if (outputTokens !== undefined) {
+          span.setAttribute("gen_ai.usage.output_tokens", outputTokens);
+        }
+        if (reasoningTokens !== undefined) {
+          // Non-standard but parallel to GenAI naming. Reasoning models
+          // (gpt-5 family) bill chain-of-thought tokens separately from
+          // visible-content tokens; surfacing this makes cost dashboards
+          // distinguish "I had to think hard" from "I had to write a lot."
+          span.setAttribute("gen_ai.usage.reasoning_tokens", reasoningTokens);
+        }
+        if (inputTokens !== undefined && outputTokens !== undefined) {
+          const cost = computeChatCostUsd(requestedModel, inputTokens, outputTokens);
+          if (cost !== undefined) {
+            // Non-standard. Approximate USD cost derived from the
+            // model pricing table in `lib/llm-pricing.ts`. Token
+            // attributes above are the canonical signal; cost is
+            // a derived convenience.
+            span.setAttribute("llm.cost_usd", cost);
+          }
+        }
+        if (!streamErrored) {
+          span.setStatus({ code: SpanStatusCode.OK });
+        }
+        span.end();
         controller.close();
       }
     },
