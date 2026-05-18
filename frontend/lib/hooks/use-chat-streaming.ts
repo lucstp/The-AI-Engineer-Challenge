@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import { ChatApiError, streamChatMessage } from "@/lib/chat-client";
 import { createAssistantMessage, createUserMessage } from "@/lib/chat-state";
-import type { ChatMessage } from "@/lib/chat-types";
+import type { ChatMessage, ModelId } from "@/lib/chat-types";
 
 export interface ChatStreaming {
   isLoading: boolean;
@@ -12,11 +12,12 @@ export interface ChatStreaming {
   requestStopped: boolean;
   setRequestStopped: React.Dispatch<React.SetStateAction<boolean>>;
   activeRequestRef: React.RefObject<AbortController | null>;
-  submitMessage: (messageText: string) => Promise<void>;
+  submitMessage: (messageText: string, model: ModelId) => Promise<void>;
   stopCurrentRequest: () => void;
   /** Retry the last user message after an error. Does NOT add a second user
    * turn — the original user message is already in the array from the
-   * original failed submission. */
+   * original failed submission. Replays with the model used originally,
+   * not the user's current selection. */
   retryLastMessage: () => Promise<void>;
 }
 
@@ -40,9 +41,11 @@ export function useChatStreaming({
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [requestStopped, setRequestStopped] = useState(false);
   const activeRequestRef = useRef<AbortController | null>(null);
-  // Last user message text — captured on every submit so Retry can re-send
-  // it without requiring the user to retype after a transient OpenAI error.
+  // Last user message text + model — captured on every submit so Retry can
+  // re-send the exact same payload after a transient OpenAI error, even if
+  // the user has since changed their dropdown selection.
   const lastUserMessageRef = useRef<string | null>(null);
+  const lastUserModelRef = useRef<ModelId | null>(null);
 
   useEffect(() => {
     return () => {
@@ -51,7 +54,7 @@ export function useChatStreaming({
   }, []);
 
   const runRequest = useCallback(
-    async (messageText: string, isRetry: boolean) => {
+    async (messageText: string, model: ModelId, isRetry: boolean) => {
       const trimmed = messageText.trim();
       if (!trimmed || isLoading || isChatLocked) {
         return;
@@ -76,6 +79,7 @@ export function useChatStreaming({
         setMessages((prev) => [...prev, userMessage, assistantMessage]);
         setInputValue("");
         lastUserMessageRef.current = trimmed;
+        lastUserModelRef.current = model;
       }
 
       setIsLoading(true);
@@ -85,6 +89,7 @@ export function useChatStreaming({
       try {
         await streamChatMessage(trimmed, {
           signal: controller.signal,
+          model,
           onChunk: (chunk) => {
             receivedChunk = true;
             setMessages((prev) =>
@@ -121,14 +126,15 @@ export function useChatStreaming({
   );
 
   const submitMessage = useCallback(
-    (messageText: string) => runRequest(messageText, false),
+    (messageText: string, model: ModelId) => runRequest(messageText, model, false),
     [runRequest]
   );
 
   const retryLastMessage = useCallback(async () => {
-    const last = lastUserMessageRef.current;
-    if (last !== null) {
-      await runRequest(last, true);
+    const lastMessage = lastUserMessageRef.current;
+    const lastModel = lastUserModelRef.current;
+    if (lastMessage !== null && lastModel !== null) {
+      await runRequest(lastMessage, lastModel, true);
     }
   }, [runRequest]);
 

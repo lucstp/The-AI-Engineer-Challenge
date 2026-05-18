@@ -40,14 +40,15 @@ function shannonEntropyBitsPerChar(input: string): number {
 
 const serverEnvSchema = z.object({
   OPENAI_MODEL: z.string().trim().min(1).default("gpt-4.1-mini"),
-  // 1500 is comfortable for the gpt-4.1-mini default — no reasoning
-  // overhead, full Coldplay-length answers fit with headroom. If a
-  // deployment overrides OPENAI_MODEL to a reasoning model (gpt-5,
-  // o-series), bump this to ~4000: those models spend hundreds of
-  // tokens on internal chain-of-thought BEFORE emitting any content
-  // delta, and a too-low cap blows the entire budget on reasoning →
-  // empty stream → "assistant returned an empty response."
-  OPENAI_MAX_COMPLETION_TOKENS: z.coerce.number().int().positive().default(1500),
+  // 4000 is the safe ceiling across every MODELS entry (`lib/constants.ts`).
+  // Reasoning models (gpt-5 family) burn hundreds of tokens on silent
+  // chain-of-thought BEFORE emitting any content delta — a too-low cap
+  // exhausts the budget on reasoning → empty stream → "assistant
+  // returned an empty response." Non-reasoning models simply don't use
+  // the headroom. This env var is now a HARD CEILING the route applies
+  // on top of the per-model cap: `min(model.maxCompletionTokens, env)`.
+  // Operator override still wins.
+  OPENAI_MAX_COMPLETION_TOKENS: z.coerce.number().int().positive().default(4000),
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
   // Used by lib/session-crypto.ts to AES-256-GCM-seal the OpenAI key cookie.
   // Generate with: openssl rand -base64 48

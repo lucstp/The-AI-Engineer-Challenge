@@ -1,15 +1,19 @@
+import type { ModelId } from "@/lib/constants";
 import { chatErrorResponseSchema, chatRequestSchema } from "@/lib/schemas";
 
 const STREAMING_ENDPOINT = "/api/chat";
 
 export interface ChatRequest {
   message: string;
+  model?: ModelId;
 }
 
 interface StreamChatOptions {
   signal?: AbortSignal;
   timeoutMs?: number;
   onChunk: (chunk: string) => void;
+  /** Optional model override — falls back to the server's env default if absent. */
+  model?: ModelId;
 }
 
 export class ChatApiError extends Error {
@@ -32,7 +36,7 @@ export async function streamChatMessage(
   message: string,
   options: StreamChatOptions
 ): Promise<void> {
-  const parsed = chatRequestSchema.safeParse({ message });
+  const parsed = chatRequestSchema.safeParse({ message, model: options.model });
   if (!parsed.success) {
     throw new ChatApiError(
       parsed.error.issues[0]?.message ?? "Please write a message before sending."

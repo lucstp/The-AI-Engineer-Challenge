@@ -15,6 +15,7 @@ import { useChatPersistence } from "@/lib/hooks/use-chat-persistence";
 import { useChatScroll } from "@/lib/hooks/use-chat-scroll";
 import { useChatStreaming } from "@/lib/hooks/use-chat-streaming";
 import { useKeyLifecycle } from "@/lib/hooks/use-key-lifecycle";
+import { useModelPreference } from "@/lib/hooks/use-model-preference";
 import { useShellBurstFlash } from "@/lib/hooks/use-shell-burst-flash";
 import { useSoundExperience } from "@/lib/hooks/use-sound-experience";
 import { useWelcomeInjection } from "@/lib/hooks/use-welcome-injection";
@@ -49,6 +50,11 @@ export function ChatShell({ initialIsApiKeyVerified }: ChatShellProps) {
   const sound = useSoundExperience();
 
   const persistence = useChatPersistence();
+
+  // localStorage-backed UI preference. Disconnect does NOT wipe this — it's
+  // a setting, not conversation data (which lives in sessionStorage and is
+  // wiped on disconnect).
+  const modelPreference = useModelPreference();
 
   const key = useKeyLifecycle({
     initialIsApiKeyVerified,
@@ -302,12 +308,19 @@ export function ChatShell({ initialIsApiKeyVerified }: ChatShellProps) {
                   onDismissError={() => streaming.setErrorMessage(null)}
                   onRetryLastMessage={() => void streaming.retryLastMessage()}
                   onChooseExamplePrompt={(prompt) => {
-                    void streaming.submitMessage(prompt);
+                    void streaming.submitMessage(prompt, modelPreference.selectedModel);
                   }}
                   inputValue={persistence.inputValue}
                   onInputChange={persistence.setInputValue}
-                  onSubmitMessage={() => void streaming.submitMessage(persistence.inputValue)}
+                  onSubmitMessage={() =>
+                    void streaming.submitMessage(
+                      persistence.inputValue,
+                      modelPreference.selectedModel
+                    )
+                  }
                   onStopRequest={streaming.stopCurrentRequest}
+                  selectedModel={modelPreference.selectedModel}
+                  onModelChange={modelPreference.setSelectedModel}
                 />
               )}
             </Card>

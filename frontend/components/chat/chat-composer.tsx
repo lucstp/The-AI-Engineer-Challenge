@@ -1,19 +1,23 @@
 import { ArrowUp, Sparkles } from "lucide-react";
 import type { FormEvent, KeyboardEvent } from "react";
 
+import { ModelSelector } from "@/components/chat/model-selector";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import type { ModelId } from "@/lib/chat-types";
 import { fireOnUserAction } from "@/lib/confetti";
 
 interface ChatComposerProps {
   value: string;
   isLoading: boolean;
   isDisabled: boolean;
+  selectedModel: ModelId;
   onChange: (value: string) => void;
   onSubmit: () => void;
   onStop: () => void;
+  onModelChange: (modelId: ModelId) => void;
 }
 
 const QUICK_COLDPLAY_PROMPTS = [
@@ -28,9 +32,11 @@ export function ChatComposer({
   value,
   isLoading,
   isDisabled,
+  selectedModel,
   onChange,
   onSubmit,
   onStop,
+  onModelChange,
 }: ChatComposerProps) {
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -90,6 +96,11 @@ export function ChatComposer({
         className="composer-field field-sizing-content max-h-36 min-h-0 resize-none rounded-none border-0 bg-transparent px-4 py-[1.05rem] text-[1.02rem] text-white shadow-none placeholder:text-white/66 focus-visible:border-0 focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0"
       />
       <div className="composer-tools">
+        <ModelSelector
+          selectedModel={selectedModel}
+          onModelChange={onModelChange}
+          disabled={isLoading || isDisabled}
+        />
         {!isLoading ? (
           <Tooltip>
             <TooltipTrigger asChild>

@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { MODEL_IDS } from "@/lib/constants";
+
 /**
  * Single source of truth for all runtime validation at trust boundaries:
  *  - Server actions (`app/actions.ts`)
@@ -10,6 +12,14 @@ import { z } from "zod";
  * Static types are derived via `z.infer<>` so editing a schema updates all
  * call-site types simultaneously — no parallel type/schema drift.
  */
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Domain — model dropdown allowlist
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Server-side allowlist for the UI model dropdown. Derived from `lib/constants`
+ * so adding/removing a model is a single-source change. */
+export const modelIdSchema = z.enum(MODEL_IDS);
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Domain — chat messages
@@ -35,6 +45,7 @@ export type ChatMessage = z.infer<typeof chatMessageSchema>;
 
 export const chatRequestSchema = z.object({
   message: z.string().trim().min(1, "Message cannot be empty.").max(4000, "Message is too long."),
+  model: modelIdSchema.optional(),
 });
 
 export type ChatRequest = z.infer<typeof chatRequestSchema>;
