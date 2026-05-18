@@ -1,4 +1,5 @@
 import bundleAnalyzer from "@next/bundle-analyzer";
+import { withSentryConfig } from "@sentry/nextjs";
 import type { NextConfig } from "next";
 
 // Bundle analyzer — opt-in via `pnpm analyze` (sets ANALYZE=true). Pops
@@ -97,4 +98,38 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default withBundleAnalyzer(nextConfig);
+// Composition order: bundle-analyzer wraps the user config first
+// (modifies webpack via plugin), then withSentryConfig wraps the
+// already-instrumented config to attach the Sentry build plugin for
+// source-map upload + release tagging. Reversing the order would let
+// Sentry's plugin run BEFORE the analyzer's, hiding analyzer output
+// from the source-map upload manifest.
+//
+// Sentry options:
+//  • `org` / `project` — Vercel marketplace integration auto-injects
+//    SENTRY_ORG + SENTRY_PROJECT. Hardcoded fallback values would make
+//    the repo non-portable; environment-driven keeps it forkable.
+//  • `silent: !process.env.CI` — quiet local builds; verbose in CI so
+//    source-map upload status appears in the GitHub Actions log.
+//  • `telemetry: false` — Sentry's own usage-beacon opt-out. We don't
+//    need anonymous build telemetry leaving the build container.
+//  • `autoInstrument*: false` — disables Sentry's auto-tracing wrappers
+//    around server functions / middleware / app-dir. The OTel SDK
+//    (@vercel/otel, registered in `instrumentation.ts`) already
+//    emits these spans via fetch-instrumentation. Leaving Sentry's
+//    auto-instrumentation on would produce duplicate spans on every
+//    request — not duplicate ERRORS (those are deduped) but duplicate
+//    perf traces. We chose @vercel/otel as the single trace source.
+//  • `automaticVercelMonitors: false` — we don't have Vercel Cron jobs.
+const sentryBuildOptions = {
+  org: process.env.SENTRY_ORG,
+  project: process.env.SENTRY_PROJECT,
+  silent: !process.env.CI,
+  telemetry: false,
+  autoInstrumentServerFunctions: false,
+  autoInstrumentMiddleware: false,
+  autoInstrumentAppDirectory: false,
+  automaticVercelMonitors: false,
+};
+
+export default withSentryConfig(withBundleAnalyzer(nextConfig), sentryBuildOptions);

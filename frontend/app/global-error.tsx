@@ -1,5 +1,8 @@
 "use client";
 
+import * as Sentry from "@sentry/nextjs";
+import { useEffect } from "react";
+
 interface GlobalErrorProps {
   error: Error & { digest?: string };
   reset: () => void;
@@ -8,8 +11,19 @@ interface GlobalErrorProps {
 /**
  * Root-level error boundary. Triggered when the root layout itself throws.
  * Must include its own <html> and <body> since the layout is unavailable.
+ *
+ * Capture-to-Sentry fires in `useEffect` (not at render) because
+ * `Sentry.captureException` queues a network request; firing it during
+ * render risks a render-loop if Sentry itself throws synchronously.
+ * The dependency on `error` means a fresh error after `reset()` re-fires
+ * capture, while a remount with the same error object does not double-
+ * report.
  */
 export default function GlobalError({ error, reset }: GlobalErrorProps) {
+  useEffect(() => {
+    Sentry.captureException(error);
+  }, [error]);
+
   return (
     <html lang="en">
       <body
