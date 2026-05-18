@@ -13,7 +13,7 @@ That's the first thing the chat types out — three lines, one character at a ti
 A love letter to **Coldplay** wrapped in a security-hardened streaming chat. Built as the capstone of the [**AI Maker Space — AI Engineering Challenge**](https://github.com/AI-Maker-Space/The-AI-Engineer-Challenge). Non-commercial, educational fair use — the band is the subject of the project, not its sponsor.
 
 <p align="center">
-  <code>29/29 tests</code> · <code>RTL + jsdom component tests</code> · <code>0 lint warnings</code> · <code>W3C autoplay-policy §3.2.2 compliant</code> · <code>iOS parity verified</code> · <code>AES-256-GCM session crypto</code> · <code>per-request CSP nonces</code>
+  <code>172/172 unit tests</code> · <code>Playwright + axe-core e2e</code> · <code>0 lint warnings</code> · <code>Promptfoo AI-behavior regression</code> · <code>OpenTelemetry GenAI conventions</code> · <code>Sentry source-mapped errors</code> · <code>Lighthouse CI</code> · <code>W3C autoplay-policy §3.2.2 compliant</code> · <code>AES-256-GCM session crypto</code> · <code>per-request CSP nonces</code>
 </p>
 
 <p align="center">
@@ -91,8 +91,10 @@ Formatting rules (always follow these):
 | Edge | **Next.js 16 `proxy.ts`** (replaces deprecated `middleware.ts`) for per-request CSP nonce |
 | Rate limit | **@upstash/ratelimit** + **@upstash/redis** with in-memory fallback |
 | Audio | **Web Audio API** for sample-accurate looped crowd ambience + one-shot SFX (boo) · **HTMLAudioElement** for music streaming |
-| Tests | **Playwright** (e2e, port 3010, prod build) + **vitest** (unit, **22/22 green**) |
-| Observability | **@vercel/speed-insights** (Core Web Vitals) + **@vercel/analytics** (page views) + structured CSP-violation reporter |
+| Tests | **vitest** (unit, **172/172 green**) + **Playwright** (e2e on port 3010 against prod build) + **@axe-core/playwright** (WCAG 2.1 AA scan, 2/2 green) |
+| AI behavior | **Promptfoo** regression suite — 15 cases × 3 model tiers — HARD contracts (scope-lock, prompt-injection, tone) at 100% pass, SOFT format preferences threshold-gated |
+| Observability | **@vercel/otel** (traces, GenAI semantic conventions for model/tokens/cost on `/api/chat`) + **@sentry/nextjs** (errors-only sink, source-map upload via Vercel marketplace) + **@vercel/speed-insights** + **@vercel/analytics** |
+| Performance gates | **Lighthouse CI** on every Vercel preview (a11y ≥ 0.95 ERROR-gated, perf ≥ 0.85 warn) + **React.lazy** code-splitting on the markdown subtree and confetti library |
 | Hosting | Vercel (region `iad1`, function caps tuned per route) |
 | Audio CDN | Vercel Blob (the licensed track stays there — NEVER in git) |
 
@@ -386,7 +388,7 @@ Region pin (`iad1`) and per-function memory / duration live in [`vercel.json`](v
 ## Tests
 
 ```bash
-pnpm test:run                  # vitest, single-pass — currently 29/29 green
+pnpm test:run                  # vitest, single-pass — currently 172/172 green
 pnpm test                      # vitest, watch mode
 pnpm test:e2e                  # playwright on port 3010 against a prod build
 ```
@@ -398,6 +400,13 @@ The e2e tests build into `.next-test/` (separate from your `.next/`) and run on 
 Default vitest environment is `node` for fast server-side tests (route handlers, server actions, pure libs). **Component tests opt in to `jsdom`** via a `// @vitest-environment jsdom` pragma at file top — each test file picks the right environment without a separate config or runner. Render helpers wrap with `<TooltipProvider>` to mirror the real root layout. Stack: `@testing-library/react` + `@testing-library/jest-dom` + `jsdom`.
 
 Example: [`tests/connection-status-card.test.tsx`](tests/connection-status-card.test.tsx) covers the status-dot color contract as a 4-case truth table (locked / error / both / verified-healthy). Same pattern unblocks every future component test.
+
+### A11y + Lighthouse CI
+
+Two browser-based gates run on every PR:
+
+- **[`@axe-core/playwright`](tests/e2e/accessibility.spec.ts)** scans the rendered DOM for WCAG 2.1 A / AA + best-practice violations on **both** surfaces (locked landing + unlocked chat shell). Currently **2/2 green, zero violations.** Tag `@a11y` for focused runs: `pnpm test:a11y`.
+- **[Lighthouse CI](../.github/workflows/lighthouse.yml)** fires on Vercel `deployment_status` events and audits the real preview URL behind the marketplace-provisioned `VERCEL_AUTOMATION_BYPASS_SECRET`. Thresholds in [`.lighthouserc.cjs`](.lighthouserc.cjs): accessibility ERROR-gates at ≥0.95, performance/best-practices WARN-gate at 0.85/0.90, SEO disabled (intentionally `noindex`).
 
 ### AI-behavior regression suite (Promptfoo)
 
@@ -434,6 +443,34 @@ Two opt-in visual configs:
 pnpm exec playwright test --config=walkthrough.config.ts     # locked → verified → disconnect screenshots
 pnpm exec playwright test --config=responsive.config.ts      # 375 / 414 / 768 / 1024 / 1440 audit
 ```
+
+---
+
+## Observability — traces, errors, costs
+
+Production observability splits cleanly along **what each tool does best**:
+
+| Signal | Tool | Why |
+|---|---|---|
+| **Traces + LLM telemetry** | [`@vercel/otel`](instrumentation.ts) emitting **OpenTelemetry GenAI semantic conventions** | CNCF vendor-neutral standard. The `/api/chat` span carries `gen_ai.system`, `gen_ai.request.model`, `gen_ai.usage.input_tokens` / `output_tokens` / `reasoning_tokens`, plus a derived `llm.cost_usd` from [`lib/llm-pricing.ts`](lib/llm-pricing.ts). Token-by-tier dashboards in Vercel Observability with zero coupling to any AI-specific SaaS. |
+| **Errors + source-mapped stack traces** | [`@sentry/nextjs`](sentry.server.config.ts) in **errors-only** mode (`tracesSampleRate: 0`) across all three runtimes (browser / Node / edge) | Production stack traces show real file:line instead of minified bundle hash. Sentry's tracing is disabled so spans don't double-emit against OTel. CSP-violation reports forwarded via [`/api/csp-report`](app/api/csp-report/route.ts) as `warning`-tagged events. |
+| **Real-user perf** | `@vercel/speed-insights` + `@vercel/analytics` | Core Web Vitals + page views, sample-based, zero config |
+
+The Sentry DSN + auth token are auto-injected by the **Vercel marketplace integration** — no manual env-var wiring. Source maps upload on every Vercel deploy via the Sentry build plugin, so production stack traces stay readable without shipping the maps to the browser.
+
+**Why this stack, not Langfuse:** Langfuse covers the chat surface in depth, but this app has five surfaces that need eyes on them — auth, audio proxy, CSRF rejections, rate-limit hits, frontend hook failures — all caught by Sentry + OTel auto-instrumentation; none caught by an LLM-only SaaS. Token / cost dashboards (Langfuse's main value-prop) are reconstructed from the GenAI semantic attributes on the OTel span. One fewer SaaS sink, FAANG-standard pipeline.
+
+---
+
+## Lazy-loading — keeping the locked-card paint fast
+
+Per the [Next.js lazy-loading guide](https://nextjs.org/docs/app/guides/lazy-loading), heavy client-only modules ship in dynamic chunks instead of the initial bundle:
+
+- **`canvas-confetti`** (~8 KB gzipped) — module-level promise cache + `import("canvas-confetti")` lazy on first call. Public API ([`lib/confetti.ts`](lib/confetti.ts)) stays synchronous fire-and-forget.
+- **`react-markdown` + `remark-gfm`** (~35-45 KB combined) — extracted to [`components/chat/markdown-message.tsx`](components/chat/markdown-message.tsx), loaded via `React.lazy` + `<Suspense>` with a **CLS-safe raw-text fallback** — the unformatted text occupies the same vertical footprint as the formatted output, so layout doesn't shift when the markdown chunk hydrates.
+- **Audio orchestrator** — deliberately *not* lazy-loaded. Chrome's autoplay-policy §3.2.2 requires synchronous `AudioContext` construction inside the gesture frame; dynamic import would break that and surface the autoplay warning. The ~10-15 KB savings isn't worth the BP-score regression.
+
+Net result: first-time visitors on the locked landing page never download the markdown stack until they actually unlock the chat AND receive an assistant response. Confetti loads on first celebration, not page mount.
 
 ---
 
@@ -509,7 +546,7 @@ frontend/
 │   ├── not-found.tsx           # custom brand-voice 404 page (same gradient + epigraphs)
 │   └── page.tsx                # server-side unseal + initial verified state
 ├── components/
-│   ├── chat/                   # the decomposed chat surface (shell, panel, composer, locked card, messages, model-selector…)
+│   ├── chat/                   # the decomposed chat surface (shell, panel, composer, locked card, messages, model-selector, markdown-message…)
 │   ├── decoration/             # aurora, doodle hearts, crowd silhouette, "Love is the only answer"
 │   ├── layout/                 # hero, disclaimer footer, layout-root
 │   ├── sound/                  # speaker toggle pill
@@ -521,23 +558,31 @@ frontend/
 │   ├── chat-client.ts          # client-side streamChatMessage helper (calls /api/chat) — forwards model
 │   ├── chat-state.ts           # message-array reducers (completeAssistantAnimation, etc.)
 │   ├── chat-types.ts           # ChatMessage + ModelId type re-exports from schemas + constants
-│   ├── confetti.ts             # fireOnUserAction wrapper around canvas-confetti
+│   ├── confetti.ts             # lazy-loaded canvas-confetti wrapper (~8 KB pulled out of the initial bundle)
 │   ├── constants.ts            # MODELS array — single source of truth for the model dropdown allowlist + per-model token caps
 │   ├── csrf.ts                 # isSameOrigin guard (lifted from inline)
 │   ├── data/auth.ts            # DAL: verifyAndStoreKey, getVerifiedKey, clearVerifiedKey
 │   ├── env.ts                  # boot-time env validation + SESSION_SECRET strength gate
 │   ├── hooks/                  # the nine feature hooks (incl. useModelPreference for the new dropdown)
+│   ├── llm-pricing.ts          # per-model USD pricing table + computeChatCostUsd helper (emits llm.cost_usd on the OTel span)
 │   ├── rate-limit.ts           # Upstash + in-memory adapter (sliding window)
 │   ├── schemas.ts              # zod single source of truth (incl. modelIdSchema derived from MODELS)
 │   ├── session-crypto.ts       # AES-256-GCM seal/unseal
+│   ├── system-prompt.ts        # COLDPLAY_SYSTEM_PROMPT — shared by /api/chat + Promptfoo evals (no drift)
 │   └── utils.ts                # cn helper (clsx + tailwind-merge)
+├── evals/                      # Promptfoo regression suite — 15 cases × 3 model tiers, HARD vs SOFT contracts
 ├── docs/
 │   └── screenshots/            # README assets
-├── proxy.ts                    # per-request CSP nonce (Next 16 file convention)
-├── next.config.ts              # static security headers (HSTS, X-Frame-Options, Permissions-Policy, COOP, CORP, …)
+├── instrumentation.ts          # Next 16 server-side hook — registers @vercel/otel + Sentry server/edge SDKs
+├── instrumentation-client.ts   # Next 16 client-side hook — Sentry browser SDK init (errors-only)
+├── sentry.server.config.ts     # Sentry Node runtime config (tracesSampleRate: 0 — OTel owns tracing)
+├── sentry.edge.config.ts       # Sentry edge runtime config (used by proxy.ts)
+├── .lighthouserc.cjs           # Lighthouse CI config — a11y ERROR ≥ 0.95, perf WARN ≥ 0.85, SEO off (noindex by design)
+├── proxy.ts                    # per-request CSP nonce (Next 16 file convention) — includes Sentry ingest + vercel.live allowances
+├── next.config.ts              # static security headers + withSentryConfig wrapper (source-map upload)
 ├── vercel.json                 # region (iad1) + per-route function caps
 ├── private/                    # gitignored — Pond5 audio for local dev only
-└── tests/                      # vitest + playwright specs (22/22 green on main)
+└── tests/                      # vitest + playwright specs (172/172 unit + a11y e2e green on main)
 ```
 
 ---
