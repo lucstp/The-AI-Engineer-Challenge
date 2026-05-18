@@ -43,8 +43,16 @@ jobs:
 
       - name: Run Lighthouse against preview URL
         uses: treosh/lighthouse-ci-action@v12
+        # Vercel Deployment Protection bypass — the config file reads
+        # this env var and emits it as the `x-vercel-protection-bypass`
+        # header on every audit request. Without it, Lighthouse follows
+        # the Vercel SSO redirect and ends up scoring the login page.
+        # Provisioned in Vercel project settings → Deployment Protection
+        # → Protection Bypass for Automation, mirrored as a repo secret.
+        env:
+          VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
         with:
           urls: ${{ github.event.deployment_status.target_url }}
-          configPath: ./frontend/.lighthouserc.json
+          configPath: ./frontend/.lighthouserc.cjs
           uploadArtifacts: true
           temporaryPublicStorage: true
