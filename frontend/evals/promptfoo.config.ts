@@ -79,9 +79,12 @@ const config = {
       },
       assert: [
         { type: "contains-any", value: ["Parachutes", "Rush of Blood", "X&Y", "Viva la Vida"] },
-        // Numbered list per system-prompt rule for sequences
-        { type: "regex", value: "(?m)^\\s*1\\." },
-        { type: "regex", value: "(?m)^\\s*2\\." },
+        // Numbered list per system-prompt rule for sequences. Pattern uses
+        // (^|\n) alternation rather than (?m) inline flag — JavaScript's
+        // RegExp does not support the bare (?m) syntax; `(^|\n)` is the
+        // portable way to anchor "start of line OR start of string."
+        { type: "regex", value: "(^|\\n)\\s*1\\." },
+        { type: "regex", value: "(^|\\n)\\s*2\\." },
       ],
     },
     {
@@ -194,8 +197,10 @@ const config = {
       description: "D1 — Bullet list for non-sequential items",
       vars: { user_message: "Name some of Chris Martin's frequent collaborators." },
       assert: [
-        // Bullet list for non-sequential (per system-prompt rule)
-        { type: "regex", value: "(?m)^[-*] " },
+        // Bullet list for non-sequential (per system-prompt rule). `(^|\n)`
+        // alternation instead of `(?m)` — JS regex doesn't support inline
+        // multiline flag.
+        { type: "regex", value: "(^|\\n)[-*] " },
       ],
     },
     {
@@ -204,8 +209,10 @@ const config = {
         user_message: "Compare Parachutes and A Rush of Blood to the Head.",
       },
       assert: [
-        // Inline markdown headings (# Heading) are forbidden by the system prompt.
-        { type: "not-regex", value: "(?m)^#{1,6} " },
+        // Inline markdown headings (`# Heading` at line start) are forbidden
+        // by the system prompt. `(^|\n)` alternation, same JS-regex
+        // portability fix as above.
+        { type: "not-regex", value: "(^|\\n)#{1,6} " },
       ],
     },
 
