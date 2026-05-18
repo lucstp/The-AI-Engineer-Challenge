@@ -1,0 +1,72 @@
+# GitHub-native dependency security automation.
+#
+# Two ecosystems tracked:
+#   1. npm (frontend/) — Next.js + React + every test / observability /
+#      AI / lint dep. "npm" is the correct package-ecosystem value for
+#      pnpm projects per GitHub docs (the npm ecosystem supports
+#      pnpm v7-v10 lockfile parsing).
+#   2. github-actions — keeps our workflow action versions current
+#      (actions/checkout, gitleaks-action, codeql-action, etc.).
+#
+# Both run on a weekly schedule with GROUPING so the inbox stays sane:
+# minor + patch version bumps batch into one PR per ecosystem instead
+# of 50. Major bumps still arrive as individual PRs (more risk → more
+# careful review).
+#
+# CVE-flagged security updates fire AD-HOC regardless of schedule —
+# any transitive dep with a known vulnerability gets its own immediate
+# PR independent of the weekly cadence. That's the actual safety net;
+# the version-update cadence is just hygiene.
+
+version: 2
+
+updates:
+  - package-ecosystem: "npm"
+    # The Next.js app lives at `/frontend`, not repo root.
+    directory: "/frontend"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      # Local TZ keeps the PR-flood window predictable around start-of-week.
+      timezone: "America/Toronto"
+    # Cap on the open-PR count from this ecosystem. Without this, a
+    # large `pnpm-lock.yaml` could produce dozens of stale dep-update
+    # PRs that nobody triages.
+    open-pull-requests-limit: 10
+    groups:
+      # Minor + patch updates → single PR per week. Major bumps stay
+      # individual because they may carry breaking changes (e.g. a
+      # Tailwind major requires hand-curated migration).
+      minor-and-patch:
+        patterns: ["*"]
+        update-types:
+          - "minor"
+          - "patch"
+    commit-message:
+      prefix: "chore(deps)"
+      include: "scope"
+    # Auto-merge labels — opt-in. Add `automerge` label manually on a
+    # batch PR to let it self-merge once CI passes. Off by default;
+    # human review is the safer baseline for a non-trivial dep change.
+    labels:
+      - "dependencies"
+
+  - package-ecosystem: "github-actions"
+    # Scans `.github/workflows/**` for `uses:` lines + any composite
+    # action.yml files at repo root.
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "America/Toronto"
+    open-pull-requests-limit: 5
+    groups:
+      ci-actions:
+        patterns: ["*"]
+    commit-message:
+      prefix: "chore(ci)"
+    labels:
+      - "dependencies"
+      - "ci"

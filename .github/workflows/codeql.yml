@@ -1,0 +1,74 @@
+name: CodeQL
+
+# Static analysis for OWASP-style vulnerable patterns in our JS/TS code:
+# XSS sinks, prototype pollution, injection, unsafe `eval`, insecure
+# regex, hardcoded credentials in code, ReDoS, taint flow into
+# dangerouslySetInnerHTML, unsafe URL parsing, and ~hundreds of other
+# CWE-categorized queries.
+#
+# Free for public repos with no quota. GitHub's first-party scanner;
+# results land in the repo Security tab and on every PR's checks page.
+#
+# Why this complements the rest of the security stack:
+#   • gitleaks — secrets accidentally committed
+#   • Dependabot — known-vulnerable third-party deps
+#   • CodeQL — vulnerable patterns in code WE wrote ourselves
+#
+# Three orthogonal scanners; together they cover the OWASP Top 10 for
+# Web + most of the OWASP Top 10 for LLM Applications.
+#
+# Triggers:
+#   • pull_request — block merging when new code introduces vulns
+#   • push to main — track main-branch posture over time
+#   • schedule (weekly Mon 06:00 UTC) — re-scan with the latest CodeQL
+#     queries; new vulnerability rules can apply to code that was
+#     clean when originally written. Cron catches that drift.
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  schedule:
+    - cron: "0 6 * * 1"
+  workflow_dispatch:
+
+permissions:
+  # Required to read the source.
+  contents: read
+  # Required to upload the SARIF results so they appear in the Security tab.
+  security-events: write
+  # Required so the action can reach workflow runs (e.g. for matrix metadata).
+  actions: read
+
+jobs:
+  analyze:
+    name: Analyze (${{ matrix.language }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        # `javascript-typescript` is the unified language pack — covers
+        # both .js and .ts in a single analysis pass (faster than two
+        # separate matrix entries).
+        language: ["javascript-typescript"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: ${{ matrix.language }}
+          # `security-extended` adds queries beyond the default
+          # security pack (more findings, more comprehensive). The
+          # alternative — `security-and-quality` — also adds code-
+          # quality lints, but biome already owns our quality story
+          # locally; duplicating that signal here would be noise.
+          queries: security-extended
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: "/language:${{ matrix.language }}"
