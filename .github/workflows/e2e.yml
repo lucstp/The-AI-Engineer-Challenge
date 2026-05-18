@@ -1,0 +1,87 @@
+name: E2E tests
+
+# Playwright end-to-end suite. Runs every PR + main push so the existing
+# session-persistence flow and the new axe-core a11y scans stay green.
+#
+# Why a dedicated workflow vs. bundling into the lint/unit workflow:
+# Playwright needs a real Chromium browser (~140 MB download, cached
+# between runs) and the Next.js production server (`next build` + `next
+# start`), which adds ~3-5 min per run. Isolating it keeps the fast
+# typecheck/lint/unit gates fast and lets devs see e2e status as its
+# own check on the PR.
+#
+# Cost: GitHub-hosted runner minutes. No external SaaS or paid API
+# calls. axe-core runs in-browser, no server round-trip.
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: e2e-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  e2e:
+    name: Run Playwright tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.30.1
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: pnpm
+          cache-dependency-path: frontend/pnpm-lock.yaml
+
+      - name: Install dependencies
+        working-directory: frontend
+        run: pnpm install --frozen-lockfile
+
+      # Cache Playwright's browser downloads across runs. ~140 MB so this
+      # is a meaningful CI-time savings. Keyed on the @playwright/test
+      # version (via lockfile hash) so a version bump invalidates the
+      # cache automatically.
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        id: playwright-cache
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('frontend/pnpm-lock.yaml') }}
+
+      - name: Install Playwright browsers
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
+        working-directory: frontend
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Install Playwright system deps (cache hit path)
+        if: steps.playwright-cache.outputs.cache-hit == 'true'
+        working-directory: frontend
+        run: pnpm exec playwright install-deps chromium
+
+      - name: Run Playwright tests
+        working-directory: frontend
+        env:
+          # Pinned in `tests/global-setup.ts` for deterministic AES-256
+          # cookie sealing across the test runner + the spawned
+          # `next start` process. Not a real secret — only used for the
+          # synthetic test session.
+          CI: "true"
+        run: pnpm exec playwright test --reporter=line
+
+      - name: Upload test artifacts on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-${{ github.run_id }}
+          path: frontend/test-results/
+          retention-days: 14

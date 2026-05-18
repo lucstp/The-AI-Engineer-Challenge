@@ -1,0 +1,58 @@
+name: Lighthouse CI
+
+# Performance + accessibility + best-practices regression gate.
+#
+# Triggers on Vercel `deployment_status` events: the moment a preview
+# deploy succeeds, Lighthouse runs against the real preview URL. This
+# is more accurate than running against `next start` locally because
+# it includes Vercel's edge cache, image-optimization pipeline, and
+# the production CSP/security header set.
+#
+# Thresholds (see frontend/.lighthouserc.json):
+#   • Accessibility: hard error at <0.95 — a11y regressions block merges
+#   • Performance:   warning at <0.85 — network-sensitive, doesn't block
+#   • Best Practices: warning at <0.90
+#   • SEO: off (we intentionally `robots: noindex` per fair-use posture)
+#
+# Cost: ~3 min per run, 0 external charges. Lighthouse runs inside the
+# GitHub-hosted runner; the only "cost" is the public-storage upload
+# (free) that gives the PR a viewable report URL.
+
+on:
+  deployment_status:
+
+concurrency:
+  group: lighthouse-${{ github.event.deployment_status.deployment_id || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lighthouse:
+    name: Run Lighthouse on Vercel preview
+    runs-on: ubuntu-latest
+    # Only fire on successful preview/production deployments from Vercel.
+    # `target_url` carries the deployed URL; absence is the safety net
+    # in case GitHub fires the event with a partially-formed payload.
+    if: >-
+      github.event.deployment_status.state == 'success'
+      && github.event.deployment_status.target_url != ''
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run Lighthouse against preview URL
+        uses: treosh/lighthouse-ci-action@v12
+        # Vercel Deployment Protection bypass — the config file reads
+        # this env var and emits it as the `x-vercel-protection-bypass`
+        # header on every audit request. Without it, Lighthouse follows
+        # the Vercel SSO redirect and ends up scoring the login page.
+        # Provisioned in Vercel project settings → Deployment Protection
+        # → Protection Bypass for Automation, mirrored as a repo secret.
+        env:
+          VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
+        with:
+          urls: ${{ github.event.deployment_status.target_url }}
+          configPath: ./frontend/.lighthouserc.cjs
+          uploadArtifacts: true
+          temporaryPublicStorage: true
