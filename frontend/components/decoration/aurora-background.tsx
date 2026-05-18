@@ -1,37 +1,55 @@
+import Image from "next/image";
+
 /**
- * Coldplay Moon Music-style background graphics: two rainbow aurora SVG
+ * Coldplay Moon Music-style background graphics: two rainbow aurora WebP
  * layers anchored at the top-left and bottom-left of the viewport, each
  * animating with a staggered drift. Pure decorative chrome — `aria-hidden`.
+ *
+ * Provenance: the two source WebPs were originally produced by Coldplay
+ * for their Moon Music marketing site (coldplay.com). They are
+ * self-hosted in `public/decoration/` rather than hot-linked from
+ * coldplay.com to (a) avoid breaking when the upstream CDN rotates URLs
+ * and (b) get them through the Vercel image-optimization pipeline
+ * (AVIF + WebP + responsive srcset). Their use here is covered by the
+ * non-commercial educational fair-use posture documented in the
+ * `<DisclaimerFooter>` — a temporary arrangement, not original work.
+ *
+ * Served via `next/image` so Vercel auto-converts to AVIF when the
+ * browser's Accept header advertises it. `fill` lets each image
+ * occupy the positioned-via-CSS container set by `.header__bg-img`,
+ * `.footer__bg-img`, `.footer__bg-2-img` in `globals.css`.
  */
-
-const BG_TOP_LEFT_URL =
-  "https://www.coldplay.com/wp/wp-content/themes/coldplay-2024/dist/images/bg-top-left.webp";
-
-const BG_BOTTOM_LEFT_URL =
-  "https://www.coldplay.com/wp/wp-content/themes/coldplay-2024/dist/images/bg-bottom-left.webp";
-
 export function AuroraBackground() {
   return (
     <div className="global-graphics" aria-hidden>
       <picture className="header__bg-img">
-        <img src={BG_TOP_LEFT_URL} alt="" className="header__bg" decoding="async" loading="lazy" />
+        <Image
+          src="/decoration/aurora-top-left.webp"
+          alt=""
+          fill
+          sizes="100vw"
+          quality={70}
+          className="header__bg"
+        />
       </picture>
       <picture className="footer__bg-2-img">
-        <img
-          src={BG_BOTTOM_LEFT_URL}
+        <Image
+          src="/decoration/aurora-bottom-left.webp"
           alt=""
+          fill
+          sizes="100vw"
+          quality={70}
           className="footer__bg"
-          decoding="async"
-          loading="lazy"
         />
       </picture>
       <picture className="footer__bg-img">
-        <img
-          src={BG_BOTTOM_LEFT_URL}
+        <Image
+          src="/decoration/aurora-bottom-left.webp"
           alt=""
+          fill
+          sizes="100vw"
+          quality={70}
           className="footer__bg"
-          decoding="async"
-          loading="lazy"
         />
       </picture>
     </div>

@@ -432,7 +432,7 @@ The shell is one card. It glows. It has personality.
 - **`HeartDoodle`** flanks the hero subtitle (yellow on the left, orange on the right, slightly rotated for hand-drawn feel)
 - **`prism-line`** — a thin chromatic-aberration hairline accent under the headline, defined as a `@theme` glass primitive
 - **`shell-burst`** — a 900ms glow flash on lock-state flip (verify success / disconnect), driven by `useShellBurstFlash`
-- **`CrowdSilhouette`** — chroma-keyed concert-crowd PNG that fades in at chat-unlock time, owns the bottom 55vh of the viewport
+- **`CrowdSilhouette`** — chroma-keyed concert-crowd image (source PNG, auto-served as AVIF / WebP via `next/image` + Vercel's image optimization pipeline) that fades in at chat-unlock time, owns the bottom 55vh of the viewport
 - **Welcome typewriter** — three lines, two markdown hard-breaks, ~2.2s reveal, owned by `useWelcomeInjection` with a synchronous ref-latch that survives React StrictMode's dev double-invoke
 - **Ambient confetti** — `useAmbientConfetti` cycles fireworks + side-cannon bursts while chat is unlocked
 

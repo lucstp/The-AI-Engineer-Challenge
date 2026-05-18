@@ -1,5 +1,7 @@
 "use client";
 
+import Image from "next/image";
+
 import { cn } from "@/lib/utils";
 
 interface CrowdSilhouetteProps {
@@ -42,21 +44,36 @@ export function CrowdSilhouette({ isVisible }: CrowdSilhouetteProps) {
       style={{ zIndex: -1 }}
     >
       <div className="relative h-full w-full animate-crowd-bob">
-        <img
-          src="/concert-crowd.png"
+        {/*
+         * `Image fill` is absolute-positioned inside the relative parent
+         * — equivalent to the prior `<img absolute inset-x-0 bottom-0
+         * h-full w-full>` layout. Vercel auto-serves AVIF (transparent
+         * channel preserved) when the browser advertises it via Accept
+         * header, then WebP, with PNG as the original fallback. Eager
+         * loading is intentional: the silhouette must be ready when
+         * `isVisible` flips so the slide-in animation is smooth.
+         */}
+        <Image
+          src="/decoration/concert-crowd.png"
           alt=""
-          className="absolute inset-x-0 bottom-0 h-full w-full animate-crowd-fade-a object-cover"
-          style={{ objectPosition: "50% 25%" }}
+          fill
+          sizes="100vw"
+          quality={75}
+          priority={false}
           loading="eager"
-          decoding="async"
+          className="animate-crowd-fade-a object-cover"
+          style={{ objectPosition: "50% 25%" }}
         />
-        <img
-          src="/concert-crowd-2.png"
+        <Image
+          src="/decoration/concert-crowd-2.png"
           alt=""
-          className="absolute inset-x-0 bottom-0 h-full w-full animate-crowd-fade-b object-cover"
-          style={{ objectPosition: "50% 25%" }}
+          fill
+          sizes="100vw"
+          quality={75}
+          priority={false}
           loading="eager"
-          decoding="async"
+          className="animate-crowd-fade-b object-cover"
+          style={{ objectPosition: "50% 25%" }}
         />
       </div>
     </div>

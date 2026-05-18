@@ -68,6 +68,25 @@ const nextConfig: NextConfig = {
   // `.next-test/` (isolated from a developer's `pnpm dev` writing to
   // `.next/` on port 3000). Set by `tests/global-setup.ts`.
   distDir: process.env.NEXT_DIST_DIR ?? ".next",
+  // Vercel image-optimization policy. Every `<Image />` source goes
+  // through this pipeline; raw `<img>` tags bypass it (intentional for
+  // the SVG epigraph in `love-is-the-only-answer.tsx`).
+  //
+  //  • `formats: [AVIF, WebP]` — AVIF first because the browser-served
+  //    file is ~30-50% smaller than WebP at equivalent quality on the
+  //    decorative backgrounds; WebP is the older-Safari fallback.
+  //  • `qualities: [70, 75, 85]` — the allowlist constrains what
+  //    callers can request (per Next 16's tightened image config) so
+  //    nobody accidentally requests `quality={100}` and balloons cache.
+  //    70 = decorative backgrounds, 75 = default (crowd silhouette),
+  //    85 reserved for any future hero / screenshot asset.
+  //  • `remotePatterns` is intentionally omitted — every image we
+  //    optimize is self-hosted in `public/`. External brand assets
+  //    (Coldplay favicon) ride `<link rel="icon">`, not next/image.
+  images: {
+    formats: ["image/avif", "image/webp"],
+    qualities: [70, 75, 85],
+  },
   async headers() {
     return [
       {
