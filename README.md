@@ -358,7 +358,7 @@ Then rerun your vibe check and document:
 ---
 
 **Adjustments Made:**  
-Five PRs shipped on submission day, bundling functional fixes, a feature addition, and W3C-grade architectural compliance:
+Nine PRs shipped on submission day, bundling functional fixes, two new features (crowd-booing reaction + model selector), a comprehensive accessibility upgrade (Tooltip system), W3C-grade architectural compliance, and FAANG-grade test infrastructure:
 
 | PR | Change | User-visible outcome |
 |---|---|---|
@@ -367,11 +367,16 @@ Five PRs shipped on submission day, bundling functional fixes, a feature additio
 | **#48** | Cookie `sameSite: "strict"` → `"lax"` for iOS WebKit compliance | iPhone refresh now restores the verified session (was bouncing users back to the locked card — Chromium worked, iOS WebKit applied stricter SameSite semantics on top-level refresh). |
 | **#49** | P2 hygiene sweep — test drift cleared, 9 `nursery/useSortedClasses` warnings auto-fixed | CI went from 20/22 + 9 warnings → **22/22 + 0 warnings**. |
 | **#50** | W3C autoplay-policy spec §3.2.2 compliance — synchronous gesture-time `AudioContext` unlock | Chrome's *"AudioContext was not allowed to start"* informational console log is suppressed via spec-compliant sync construction inside the gesture frame; audio orchestration is now textbook-compliant. |
+| **#53** | Locked-state status dot color bug fix (third semantic case via new `isLocked` prop) + introduction of **RTL + jsdom component-test infrastructure** with a `// @vitest-environment jsdom` opt-in pragma | The status dot now reads **red until validation passes** (was rendering green as soon as `hasError` was false, including the locked-no-error state); foundation in place for FAANG-grade component testing across the codebase. |
+| **#54** | **shadcn `Tooltip` system** — primitive + root `<TooltipProvider>` + applied across SoundToggle, Sparkles, Send, Stop, Disconnect, Verify Key, model selector trigger | Every icon-only / action control now has an **accessible, keyboard-focusable, mobile-friendly** hint (replaces inconsistent native `title=` attributes which are a no-op on touch devices). |
+| **#55** | **NEW FEATURE:** persistent in-app **model selector** — Fast (`gpt-5-mini`) / Balanced (`gpt-5`) / Advanced (`gpt-5.5`) — backed by a single `MODELS` constant, zod allowlist on `/api/chat`, per-model token caps, `localStorage`-persisted preference | Users can choose the model from the composer; selection survives reloads and Disconnect (UI preference, not conversation data). Reasoning models get the headroom they need (env default `OPENAI_MAX_COMPLETION_TOKENS` raised 1500 → 4000). |
+| **#56** | `console.warn` sweep across 4 silent `} catch { return; }` sites in `audio-orchestrator.ts` + HeartDoodle reposition off the Locked status pill | Audio failures (autoplay-blocked, upstream 502, decode errors) are now **visible in DevTools** rather than resolving to opaque silence; HeartDoodle no longer overlaps the chat-shell's top-right corner at md / lg viewports. |
 
 **Results:**  
 - **Mobile parity** — iPhone Safari + Brave now match desktop behavior end-to-end (audio kick-off on input tap, session persistence across refresh, status-message layout fit).
-- **Console cleanliness** — production console is fully clean after enabling Vercel Web Analytics on the dashboard (the only remaining warnings were config-drift, not code bugs).
-- **Engineering health** — `pnpm typecheck` clean, `pnpm biome check` 0 warnings, `pnpm test:run` 22/22 pass, `pnpm build` clean. **Zero tech debt introduced; pre-existing debt cleared.**
+- **Console cleanliness** — production console is fully clean after enabling Vercel Web Analytics on the dashboard (the only remaining warnings were config-drift, not code bugs). Audio failure paths now emit `console.warn` with the originating error so they're debuggable rather than silent.
+- **Engineering health** — `pnpm typecheck` clean, `pnpm biome check` 0 warnings, `pnpm test:run` **29/29 pass** (was 22/22 — +4 component tests for the locked-dot truth table, +3 chat-route model-validation cases), `pnpm build` clean. **Zero tech debt introduced; pre-existing debt cleared.**
+- **A11y posture** — every interactive control now exposes a shadcn `Tooltip` (Radix-handled focus + ARIA) instead of inconsistent native `title=`. Status dot color contract covered by a 4-case truth-table component test.
 
 ---
 
