@@ -32,12 +32,24 @@
  * fails → six console errors per audit).
  */
 
-// Absolute path resolution — lhci resolves `puppeteerScript` relative
-// to its CWD (the repo root when invoked from GitHub Actions), not
-// relative to this config file. Using `__dirname` keeps the config
-// self-contained and portable across invocation contexts (CI from
-// repo root, local from `frontend/`, etc.).
+// Path resolution — lhci invokes the puppeteerScript via
+// `path.join(process.cwd(), scriptPath)` (verified in lhci source:
+// `packages/cli/src/collect/puppeteer-manager.js`). `path.join`
+// concatenates literally even when the second arg is absolute, so
+// `path.join("/repo-root", "/abs/path")` produces `/repo-root/abs/path`
+// (doubled-path bug). We have to pass a CWD-RELATIVE path.
+//
+// Compute it dynamically from `__dirname` + `path.relative()` so the
+// config is portable across invocation contexts:
+//   • CI: CWD = repo root → relative = "frontend/lighthouse-prepare.cjs"
+//   • Local from frontend/: CWD = frontend → relative = "lighthouse-prepare.cjs"
+//   • Local from repo root: same as CI
 const path = require("node:path");
+
+const PUPPETEER_SCRIPT = path.relative(
+  process.cwd(),
+  path.resolve(__dirname, "lighthouse-prepare.cjs")
+);
 
 module.exports = {
   ci: {
@@ -47,7 +59,7 @@ module.exports = {
       // deployment origin so the audit itself can run without
       // attaching the bypass header to outbound cross-origin requests.
       // See `lighthouse-prepare.cjs` for the rationale.
-      puppeteerScript: path.resolve(__dirname, "lighthouse-prepare.cjs"),
+      puppeteerScript: PUPPETEER_SCRIPT,
       settings: {
         // Desktop preset matches the primary surface for an LLM chat
         // app; mobile-first projects would flip to the mobile preset.
