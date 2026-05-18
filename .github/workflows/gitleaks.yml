@@ -1,0 +1,47 @@
+name: gitleaks
+
+# Scans every PR + push to main for committed secrets — OpenAI keys,
+# AWS access keys, JWT tokens, GitHub tokens, SSH private keys, generic
+# high-entropy strings, and ~200 other built-in detectors.
+#
+# Free for personal-account repos — no license key required. The
+# GITLEAKS_LICENSE env var is intentionally omitted (it's only required
+# for organization accounts; `lucstp/` is a personal account).
+#
+# Trigger discipline: PR + push to main + manual dispatch. No daily
+# cron — push events already cover every commit that lands; a cron on
+# a no-change day is wasted CI minutes for zero new signal.
+#
+# Complements:
+#   • GitHub's native "Push protection" / "Secret Protection" (catches
+#     well-known secret patterns at push time, before they even reach
+#     the server)
+#   • This action (catches broader high-entropy + custom patterns,
+#     including historical commits in the full fetch-depth scan)
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: write # required so the action can comment findings on PRs
+
+jobs:
+  scan:
+    name: gitleaks
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Full history so gitleaks can scan every commit, not just
+          # the diff. A secret committed once and then deleted is still
+          # in git history forever — finding it matters.
+          fetch-depth: 0
+
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
