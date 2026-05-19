@@ -20,39 +20,51 @@ name: Lighthouse CI
 
 on:
   deployment_status:
+  # Manual trigger from the GitHub Actions UI. Lets a reviewer audit the
+  # current production alias (or any URL) without waiting for a redeploy.
+  # `url` defaults to the production alias so the common case is one click.
+  workflow_dispatch:
+    inputs:
+      url:
+        description: "URL to audit (default: production alias)"
+        required: false
+        default: "https://the-ai-engineer-challenge-coral.vercel.app/"
 
 concurrency:
-  group: lighthouse-${{ github.event.deployment_status.deployment_id || github.ref }}
+  group: lighthouse-${{ github.event.deployment_status.deployment_id || github.run_id }}
   cancel-in-progress: true
 
 jobs:
   lighthouse:
     name: Run Lighthouse on Vercel preview
     runs-on: ubuntu-latest
-    # Only fire on successful preview/production deployments from Vercel.
-    # `target_url` carries the deployed URL; absence is the safety net
-    # in case GitHub fires the event with a partially-formed payload.
+    # Fire on:
+    #  • any `workflow_dispatch` (manual UI trigger — operator chose the URL)
+    #  • a successful Vercel deployment with a non-empty `target_url`
     if: >-
-      github.event.deployment_status.state == 'success'
-      && github.event.deployment_status.target_url != ''
+      github.event_name == 'workflow_dispatch'
+      || (github.event.deployment_status.state == 'success'
+          && github.event.deployment_status.target_url != '')
     timeout-minutes: 10
     permissions:
       contents: read
     steps:
       - uses: actions/checkout@v4
 
-      - name: Run Lighthouse against preview URL
+      - name: Run Lighthouse against target URL
         uses: treosh/lighthouse-ci-action@v12
-        # Vercel Deployment Protection bypass — the config file reads
-        # this env var and emits it as the `x-vercel-protection-bypass`
-        # header on every audit request. Without it, Lighthouse follows
-        # the Vercel SSO redirect and ends up scoring the login page.
-        # Provisioned in Vercel project settings → Deployment Protection
-        # → Protection Bypass for Automation, mirrored as a repo secret.
+        # Vercel Deployment Protection bypass — the puppeteerScript
+        # (`frontend/lighthouse-prepare.cjs`) reads this env var and
+        # mints a `_vercel_jwt` cookie scoped to the deployment origin,
+        # so the audit doesn't follow the Vercel SSO redirect. The
+        # production alias is public and doesn't need this, but
+        # per-deploy preview URLs do.
         env:
           VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
         with:
-          urls: ${{ github.event.deployment_status.target_url }}
+          # `workflow_dispatch.inputs.url` wins on manual triggers;
+          # falls back to the Vercel deployment URL on auto-triggers.
+          urls: ${{ github.event.inputs.url || github.event.deployment_status.target_url }}
           configPath: ./frontend/.lighthouserc.cjs
           uploadArtifacts: true
           temporaryPublicStorage: true

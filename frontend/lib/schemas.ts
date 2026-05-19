@@ -1,3 +1,5 @@
+import "@/lib/zod-config";
+
 import { z } from "zod";
 
 import { MODEL_IDS } from "@/lib/constants";
