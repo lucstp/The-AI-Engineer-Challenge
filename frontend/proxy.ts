@@ -23,17 +23,21 @@ export function proxy(request: NextRequest): NextResponse {
   const requestUrl = new URL(request.url);
   const reportingEndpoint = `${requestUrl.protocol}//${requestUrl.host}/api/csp-report`;
 
-  // strict-dynamic: trust scripts loaded by a nonced script, not by URL.
-  //   `'unsafe-inline'`, `https:`, and `'self'` are IGNORED by CSP3
-  //   browsers when `'strict-dynamic'` is present. They exist as
-  //   fallbacks so CSP1/CSP2 browsers (which don't understand
-  //   `'strict-dynamic'`) still get a functioning policy. Modern
-  //   security posture is unchanged.
-  // 'unsafe-eval' is needed only for Next.js dev hot-reload; gated to dev.
+  // Canonical CSP3 script-src: `'nonce-X' 'strict-dynamic'` only. Scripts
+  // execute IFF they carry the nonce; scripts they themselves load propagate
+  // trust via strict-dynamic. This is Google CSP Evaluator's gold-standard
+  // form and is what Chrome's Issues panel expects — adding CSP1/CSP2
+  // fallbacks (`'self'`, `'unsafe-inline'`, `https:`) creates an evaluation
+  // conflict (the fallbacks are silently ignored under strict-dynamic) that
+  // Chrome reports as a CSP issue, dragging Lighthouse Best-Practices off
+  // 100. We drop those fallbacks intentionally — CSP1/CSP2-only browsers
+  // (Chrome <40, FF <31, Safari <10, ~2014 vintage) are below the noise
+  // floor of any traffic we serve in 2026.
+  // `'unsafe-eval'` is preserved in dev for Next.js webpack hot-reload.
   const scriptSrc =
     process.env.NODE_ENV === "production"
-      ? `'self' 'nonce-${nonce}' 'strict-dynamic' 'unsafe-inline' https:`
-      : `'self' 'nonce-${nonce}' 'strict-dynamic' 'unsafe-inline' 'unsafe-eval' https:`;
+      ? `'nonce-${nonce}' 'strict-dynamic'`
+      : `'nonce-${nonce}' 'strict-dynamic' 'unsafe-eval'`;
 
   // style-src 'unsafe-inline': Tailwind v4 emits style attributes on
   // hydrated nodes; nonce-based style-src is not yet supported by
