@@ -17,6 +17,12 @@
  * resolution-independent), and routing through the optimizer just adds
  * a hop without compressing the asset. The SVG is self-hosted in
  * `public/` so there's no external CDN dependency.
+ *
+ * `loading="lazy"` + `decoding="async"`: the SVG is `display: hidden` below
+ * 2xl (see `app/page.tsx` call sites) and lives in the page margins, never
+ * above-the-fold. Lazy + async lets the browser skip the fetch entirely on
+ * viewports where the element is display:none, and decode off the main
+ * thread when it ever does come into view.
  */
 
 interface LoveIsTheOnlyAnswerProps {
@@ -29,6 +35,8 @@ export function LoveIsTheOnlyAnswer({ className }: LoveIsTheOnlyAnswerProps) {
       src="/decoration/love-is-the-only-answer.svg"
       alt="Love is the only answer"
       aria-hidden
+      loading="lazy"
+      decoding="async"
       className={className}
     />
   );

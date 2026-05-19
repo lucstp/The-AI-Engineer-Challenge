@@ -49,18 +49,26 @@ export function CrowdSilhouette({ isVisible }: CrowdSilhouetteProps) {
          * — equivalent to the prior `<img absolute inset-x-0 bottom-0
          * h-full w-full>` layout. Vercel auto-serves AVIF (transparent
          * channel preserved) when the browser advertises it via Accept
-         * header, then WebP, with PNG as the original fallback. Eager
-         * loading is intentional: the silhouette must be ready when
-         * `isVisible` flips so the slide-in animation is smooth.
+         * header, then WebP, with PNG as the original fallback.
+         *
+         * `loading="lazy"` + `fetchPriority="low"`: the silhouette is NOT
+         * the LCP element (that's the hero `<h1>`) and only appears AFTER
+         * `isVisible` flips post-verification, so it must not compete
+         * with first-paint text rendering. Lazy + low priority lets the
+         * browser fetch in the background while LCP renders, then the
+         * 1200ms slide-in transition masks any final completion latency.
+         * `sizes="100vw"` is kept — the silhouette is full-bleed, so a
+         * smaller src would visibly soften the silhouette edge contour.
          */}
         <Image
           src="/decoration/concert-crowd.png"
           alt=""
           fill
           sizes="100vw"
-          quality={75}
+          quality={70}
           priority={false}
-          loading="eager"
+          loading="lazy"
+          fetchPriority="low"
           className="animate-crowd-fade-a object-cover"
           style={{ objectPosition: "50% 25%" }}
         />
@@ -69,9 +77,10 @@ export function CrowdSilhouette({ isVisible }: CrowdSilhouetteProps) {
           alt=""
           fill
           sizes="100vw"
-          quality={75}
+          quality={70}
           priority={false}
-          loading="eager"
+          loading="lazy"
+          fetchPriority="low"
           className="animate-crowd-fade-b object-cover"
           style={{ objectPosition: "50% 25%" }}
         />
