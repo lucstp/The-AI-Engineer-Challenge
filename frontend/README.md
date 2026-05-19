@@ -406,7 +406,11 @@ Example: [`tests/connection-status-card.test.tsx`](tests/connection-status-card.
 Two browser-based gates run on every PR:
 
 - **[`@axe-core/playwright`](tests/e2e/accessibility.spec.ts)** scans the rendered DOM for WCAG 2.1 A / AA + best-practice violations on **both** surfaces (locked landing + unlocked chat shell). Currently **2/2 green, zero violations.** Tag `@a11y` for focused runs: `pnpm test:a11y`.
-- **[Lighthouse CI](../.github/workflows/lighthouse.yml)** fires on Vercel `deployment_status` events and audits the real preview URL behind the marketplace-provisioned `VERCEL_AUTOMATION_BYPASS_SECRET` (cookie-based — bypass cookie is minted by [`lighthouse-prepare.cjs`](lighthouse-prepare.cjs) puppeteerScript so the bypass header never pollutes cross-origin fetches). Thresholds in [`.lighthouserc.cjs`](.lighthouserc.cjs): accessibility ERROR-gates at ≥0.95, performance/best-practices WARN-gate at 0.85/0.90, SEO disabled (intentionally `noindex`). Current preview-deploy scores: **Performance 99 · Accessibility 100 · Best Practices 100 · SEO 63** (FCP 0.3s · LCP 0.8s · TBT 70ms · CLS 0 · SI 0.5s).
+- **[Lighthouse CI](../.github/workflows/lighthouse.yml)** fires on Vercel `deployment_status` events and audits the real preview URL behind the marketplace-provisioned `VERCEL_AUTOMATION_BYPASS_SECRET` (cookie-based — bypass cookie is minted by [`lighthouse-prepare.cjs`](lighthouse-prepare.cjs) puppeteerScript so the bypass header never pollutes cross-origin fetches). Thresholds in [`.lighthouserc.cjs`](.lighthouserc.cjs): accessibility ERROR-gates at ≥0.95, performance/best-practices WARN-gate at 0.85/0.90, SEO disabled (intentionally `noindex`). Workflow also accepts a `workflow_dispatch` manual trigger (Actions → Lighthouse CI → Run workflow) that audits the clean production alias by default. Current production-alias scores: **Performance 99 · Accessibility 100 · Best Practices 100 · SEO 63** (FCP 0.3s · LCP 0.9s · TBT 30ms · CLS 0 · SI 0.4s).
+
+<p align="center">
+  <img src="../docs/screenshots/lighthouse-scores-production.png" alt="Lighthouse CI report against production alias — Performance 99, Accessibility 100, Best Practices 100, SEO 63 (intentional noindex)" width="900">
+</p>
 
 ### AI-behavior regression suite (Promptfoo)
 
